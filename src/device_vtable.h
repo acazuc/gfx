@@ -46,7 +46,6 @@ typedef struct gfx_device_vtable_s
 	bool (*create_shader)(gfx_device_t *device, gfx_shader_t *shader, enum gfx_shader_type type, const uint8_t *data, uint32_t len);
 	void (*delete_shader)(gfx_device_t *device, gfx_shader_t *shader);
 	bool (*create_program)(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers);
-	void (*bind_program)(gfx_device_t *device, const gfx_program_t *program);
 	void (*delete_program)(gfx_device_t *device, gfx_program_t *program);
 	void (*bind_constant)(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset);
 	void (*bind_samplers)(gfx_device_t *device, uint32_t start, uint32_t count, const gfx_texture_t **textures);
@@ -104,7 +103,6 @@ extern gfx_device_vtable_t gfx_device_vtable;
 	.create_shader  = prefix##_create_shader, \
 	.delete_shader  = prefix##_delete_shader, \
 	.create_program = prefix##_create_program, \
-	.bind_program   = prefix##_bind_program, \
 	.delete_program = prefix##_delete_program, \
 	.bind_constant  = prefix##_bind_constant, \
 	.bind_samplers  = prefix##_bind_samplers, \

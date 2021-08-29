@@ -176,7 +176,10 @@ void gfx_gl_disable(gfx_device_t *device, uint32_t value)
 #endif
 }
 
-/*static void message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const *message, void const *user_param)
+//#define DEBUG_MESSAGE
+
+#ifdef DEBUG_MESSAGE
+static void message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const *message, void const *user_param)
 {
 	const char *severity_str;
 	const char *type_str;
@@ -256,13 +259,16 @@ void gfx_gl_disable(gfx_device_t *device, uint32_t value)
 			break;
 	}
 
-	printf("%s, %s, %s, %u: %s", src_str, type_str, severity_str, id, message);
-}*/
+	printf("%s, %s, %s, %u: %s\n", src_str, type_str, severity_str, id, message);
+}
+#endif
 
 static bool gl_ctr(gfx_device_t *device, gfx_window_t *window)
 {
-	//glEnable(GL_DEBUG_OUTPUT);
-	//glDebugMessageCallback(message_callback, NULL);
+#ifdef DEBUG_MESSAGE
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(message_callback, NULL);
+#endif
 	if (!gfx_device_vtable.ctr(device, window))
 		return false;
 	GL_LOAD_PROC(GL_DEVICE, DeleteBuffers);

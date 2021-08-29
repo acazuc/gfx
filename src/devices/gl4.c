@@ -1019,7 +1019,7 @@ static void gl4_resolve_render_target(gfx_device_t *device, const gfx_render_tar
 	assert(width != 0 && height != 0);
 	if (width == 0 || height == 0)
 		return;
-	GL4_CALL(BlitNamedFramebuffer, src ? src->handle.u32[0] : 0, dst ? dst->handle.u32[0] : 0, 0, 0, width, width, 0, 0, width, height, gl_buffers, GL_NEAREST);
+	GL4_CALL(BlitNamedFramebuffer, src ? src->handle.u32[0] : 0, dst ? dst->handle.u32[0] : 0, 0, 0, width, height, 0, 0, width, height, gl_buffers, GL_NEAREST);
 }
 
 static void gl4_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)

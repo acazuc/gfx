@@ -1079,7 +1079,9 @@ static void d3d11_set_render_target_draw_buffers(gfx_device_t *device, gfx_rende
 
 static void d3d11_resolve_render_target(gfx_device_t *device, const gfx_render_target_t *src, const gfx_render_target_t *dst, uint32_t buffers, uint32_t color_src, uint32_t color_dst)
 {
-	//XXX
+	ID3D11Resource *src_res;
+	ID3D11Resource *dst_res;
+	ID3D11DeviceContext_ResolveSubresource(D3D11_DEVICE->d3ddev, dst_res, 0, src_res, 0, formats[src_res->format]);
 }
 
 static void d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)

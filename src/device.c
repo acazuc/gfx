@@ -274,13 +274,6 @@ bool gfx_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_
 	return ret;
 }
 
-void gfx_bind_program(gfx_device_t *device, const gfx_program_t *program)
-{
-	DEV_DEBUG;
-	device->vtable->bind_program(device, program);
-	DEV_DEBUG;
-}
-
 void gfx_delete_program(gfx_device_t *device, gfx_program_t *program)
 {
 	DEV_DEBUG;
