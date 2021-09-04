@@ -304,7 +304,7 @@ static void gl3_draw(gfx_device_t *device, enum gfx_primitive_type primitive, ui
 #endif
 }
 
-static void gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
+static bool gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -316,6 +316,7 @@ static void gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *stat
 	state->dst_a = dst_a;
 	state->equation_c = equation_c;
 	state->equation_a = equation_a;
+	return true;
 }
 
 static void gl3_bind_blend_state(gfx_device_t *device, const gfx_blend_state_t *state)
@@ -355,7 +356,7 @@ static void gl3_delete_blend_state(gfx_device_t *device, gfx_blend_state_t *stat
 	state->handle.u64 = 0;
 }
 
-static void gl3_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass)
+static bool gl3_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -371,6 +372,7 @@ static void gl3_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stenc
 	state->stencil_fail = stencil_fail;
 	state->stencil_zfail = stencil_zfail;
 	state->stencil_pass = stencil_pass;
+	return true;
 }
 
 static void gl3_bind_depth_stencil_state(gfx_device_t *device, const gfx_depth_stencil_state_t *state)
@@ -433,7 +435,7 @@ static void gl3_delete_depth_stencil_state(gfx_device_t *device, gfx_depth_stenc
 	state->handle.u64 = 0;
 }
 
-static void gl3_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor)
+static bool gl3_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -442,6 +444,7 @@ static void gl3_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_sta
 	state->cull_mode = cull_mode;
 	state->front_face = front_face;
 	state->scissor = scissor;
+	return true;
 }
 
 static void gl3_bind_rasterizer_state(gfx_device_t *device, const gfx_rasterizer_state_t *state)
@@ -490,7 +493,7 @@ static void gl3_delete_rasterizer_state(gfx_device_t *device, gfx_rasterizer_sta
 	state->handle.u64 = 0;
 }
 
-static void gl3_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage)
+static bool gl3_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage)
 {
 	assert(!buffer->handle.u64);
 	buffer->device = device;
@@ -500,6 +503,7 @@ static void gl3_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum g
 	GL3_CALL(GenBuffers, 1, &buffer->handle.u32[0]);
 	GL3_CALL(BindBuffer, gfx_gl_buffer_types[buffer->type], buffer->handle.u32[0]);
 	GL3_CALL(BufferData, gfx_gl_buffer_types[type], size, data, gfx_gl_buffer_usages[usage]);
+	return true; //XXX
 }
 
 static void gl3_set_buffer_data(gfx_device_t *device, gfx_buffer_t *buffer, const void *data, uint32_t size, uint32_t offset)
@@ -521,7 +525,7 @@ static void gl3_delete_buffer(gfx_device_t *device, gfx_buffer_t *buffer)
 	buffer->handle.u32[0] = 0;
 }
 
-static void gl3_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
+static bool gl3_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -530,6 +534,7 @@ static void gl3_create_attributes_state(gfx_device_t *device, gfx_attributes_sta
 	state->index_buffer = index_buffer;
 	state->index_type = index_type;
 	state->handle.u32[1] = 1;
+	return true;
 }
 
 static void gl3_bind_attributes_state(gfx_device_t *device, const gfx_attributes_state_t *state, const gfx_input_layout_t *input_layout)
@@ -580,13 +585,14 @@ static void gl3_delete_attributes_state(gfx_device_t *device, gfx_attributes_sta
 	pthread_mutex_unlock(&GL_DEVICE->delete_mutex);
 }
 
-static void gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+static bool gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
 {
 	assert(!input_layout->handle.u64);
 	input_layout->device = device;
 	memcpy(input_layout->binds, binds, sizeof(*binds) * count);
 	input_layout->count = count;
 	input_layout->handle.u64 = ++GL_DEVICE->state_idx;
+	return true;
 }
 
 static void gl3_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout)
@@ -596,7 +602,7 @@ static void gl3_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *in
 	input_layout->handle.u64 = 0;
 }
 
-static void gl3_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth)
+static bool gl3_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth)
 {
 	assert(!texture->handle.u64);
 	texture->device = device;
@@ -689,6 +695,7 @@ static void gl3_create_texture(gfx_device_t *device, gfx_texture_t *texture, enu
 		if (height < 1)
 			height = 1;
 	}
+	return true; //XXX
 }
 
 static void gl3_set_texture_data(gfx_device_t *device, gfx_texture_t *texture, uint8_t lod, uint32_t offset, uint32_t width, uint32_t height, uint32_t depth, uint32_t size, const void *data)
@@ -973,7 +980,7 @@ static void gl3_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t cou
 
 static void gl3_bind_render_target(gfx_device_t *device, const gfx_render_target_t *render_target);
 
-static void gl3_create_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
+static bool gl3_create_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
 {
 	assert(!render_target->handle.u64);
 	render_target->device = device;
@@ -982,6 +989,7 @@ static void gl3_create_render_target(gfx_device_t *device, gfx_render_target_t *
 	render_target->depth_stencil.texture = NULL;
 	GL3_CALL(GenFramebuffers, 1, &render_target->handle.u32[0]);
 	gl3_bind_render_target(device, render_target);
+	return true; //XXX
 }
 
 static void gl3_delete_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
@@ -1114,7 +1122,7 @@ static void gl3_resolve_render_target(gfx_device_t *device, const gfx_render_tar
 	GL3_CALL(BlitFramebuffer, 0, 0, width, height, 0, 0, width, height, gl_buffers, GL_NEAREST);
 }
 
-static void gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+static bool gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
 {
 	assert(!state->handle.u64);
 	state->handle.u64 = ++GL_DEVICE->state_idx;
@@ -1123,6 +1131,7 @@ static void gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t
 	state->depth_stencil_state = depth_stencil;
 	state->blend_state = blend;
 	state->input_layout = input_layout;
+	return true;
 }
 
 static void gl3_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state)

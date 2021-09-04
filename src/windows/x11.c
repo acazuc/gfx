@@ -271,10 +271,6 @@ void gfx_x11_set_mouse_position(gfx_x11_window_t *window, int32_t x, int32_t y)
 	XWarpPointer(window->display, None, window->window, 0, 0, 0, 0, x, y);
 }
 
-static void create_window(gfx_x11_window_t *window, const char *title, XVisualInfo *vi)
-{
-}
-
 static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 {
 	KeySym xkey;

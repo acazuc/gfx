@@ -232,7 +232,7 @@ static void create_context(gfx_window_t *window, gfx_window_properties_t *proper
 gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_window)
 {
 	XVisualInfo *vi = NULL;
-	GLXFBConfig *configs;
+	GLXFBConfig *configs = NULL;
 	gfx_window_t *window = calloc(sizeof(gfx_glx_window_t), 1);
 	if (!window)
 	{
@@ -256,11 +256,14 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 	}
 	GLX_WINDOW->window = glXCreateWindow(X11_WINDOW->display, configs[0], X11_WINDOW->window, NULL);
 	create_context(window, properties, vi, configs, shared_window);
+	XFree(configs);
+	XFree(vi);
 	return window;
 
 err:
 	window->vtable->dtr(window);
 	free(window);
+	XFree(configs);
 	XFree(vi);
 	return NULL;
 }

@@ -15,27 +15,27 @@ typedef struct gfx_device_vtable_s
 	void (*draw_indexed)(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset);
 	void (*draw)(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset);
 
-	void (*create_blend_state)(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a);
+	bool (*create_blend_state)(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a);
 	void (*delete_blend_state)(gfx_device_t *device, gfx_blend_state_t *state);
 
-	void (*create_depth_stencil_state)(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass);
+	bool (*create_depth_stencil_state)(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass);
 	void (*delete_depth_stencil_state)(gfx_device_t *device, gfx_depth_stencil_state_t *state);
 
-	void (*create_rasterizer_state)(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor);
+	bool (*create_rasterizer_state)(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor);
 	void (*delete_rasterizer_state)(gfx_device_t *device, gfx_rasterizer_state_t *state);
 
-	void (*create_buffer)(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage);
+	bool (*create_buffer)(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage);
 	void (*set_buffer_data)(gfx_device_t *device, gfx_buffer_t *buffer, const void *data, uint32_t size, uint32_t offset);
 	void (*delete_buffer)(gfx_device_t *device, gfx_buffer_t *buffer);
 
-	void (*create_attributes_state)(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type);
+	bool (*create_attributes_state)(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type);
 	void (*bind_attributes_state)(gfx_device_t *device, const gfx_attributes_state_t *state, const gfx_input_layout_t *input_layout);
 	void (*delete_attributes_state)(gfx_device_t *device, gfx_attributes_state_t *state);
 
-	void (*create_input_layout)(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program);
+	bool (*create_input_layout)(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program);
 	void (*delete_input_layout)(gfx_device_t *device, gfx_input_layout_t *input_layout);
 
-	void (*create_texture)(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth);
+	bool (*create_texture)(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth);
 	void (*set_texture_data)(gfx_device_t *device, gfx_texture_t *texture, uint8_t lod, uint32_t offset, uint32_t width, uint32_t height, uint32_t depth, uint32_t size, const void *data);
 	void (*set_texture_addressing)(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_addressing addressing_s, enum gfx_texture_addressing addressing_t, enum gfx_texture_addressing addressing_r);
 	void (*set_texture_filtering)(gfx_device_t *device, gfx_texture_t *texture, enum gfx_filtering min_filtering, enum gfx_filtering mag_filtering, enum gfx_filtering mip_filtering);
@@ -50,14 +50,14 @@ typedef struct gfx_device_vtable_s
 	void (*bind_constant)(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset);
 	void (*bind_samplers)(gfx_device_t *device, uint32_t start, uint32_t count, const gfx_texture_t **textures);
 
-	void (*create_render_target)(gfx_device_t *device, gfx_render_target_t *render_target);
+	bool (*create_render_target)(gfx_device_t *device, gfx_render_target_t *render_target);
 	void (*delete_render_target)(gfx_device_t *device, gfx_render_target_t *render_target);
 	void (*bind_render_target)(gfx_device_t *device, const gfx_render_target_t *render_target);
 	void (*set_render_target_texture)(gfx_device_t *device, gfx_render_target_t *render_target, enum gfx_render_target_attachment attachment, const gfx_texture_t *texture);
 	void (*set_render_target_draw_buffers)(gfx_device_t *device, gfx_render_target_t *render_target, uint32_t *draw_buffers, uint32_t draw_buffers_count);
 	void (*resolve_render_target)(gfx_device_t *device, const gfx_render_target_t *src, const gfx_render_target_t *dst, uint32_t buffers, uint32_t src_color, uint32_t dst_color);
 
-	void (*create_pipeline_state)(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout);
+	bool (*create_pipeline_state)(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout);
 	void (*delete_pipeline_state)(gfx_device_t *device, gfx_pipeline_state_t *state);
 	void (*bind_pipeline_state)(gfx_device_t *device, const gfx_pipeline_state_t *state);
 
