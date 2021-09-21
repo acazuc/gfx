@@ -48,16 +48,26 @@ static bool d3d_create_device(gfx_window_t *window)
 {
 	switch (window->properties.device_backend)
 	{
-#ifdef GFX_ENABLE_DEVICE_D3D9
+		case GFX_DEVICE_GL3:
+			break;
+		case GFX_DEVICE_GL4:
+			break;
 		case GFX_DEVICE_D3D9:
+#ifdef GFX_ENABLE_DEVICE_D3D9
 			window->device = gfx_d3d9_device_new(&D3D_WINDOW->window, &D3D_WINDOW->swap_chain_desc, &D3D_WINDOW->swap_chain);
 			return true;
+#else
+			break;
 #endif
-#ifdef GFX_ENABLE_DEVICE_D3D11
 		case GFX_DEVICE_D3D11:
+#ifdef GFX_ENABLE_DEVICE_D3D11
 			window->device = gfx_d3d11_device_new(&D3D_WINDOW->window, &D3D_WINDOW->swap_chain_desc, &D3D_WINDOW->swap_chain);
 			return true;
+#else
+			break;
 #endif
+		case GFX_DEVICE_VK:
+			break;
 	}
 	return false;
 }

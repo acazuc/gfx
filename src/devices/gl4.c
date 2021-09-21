@@ -582,6 +582,7 @@ static void gl4_delete_attributes_state(gfx_device_t *device, gfx_attributes_sta
 
 static bool gl4_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
 {
+	(void)program;
 	assert(!input_layout->handle.u64);
 	input_layout->device = device;
 	memcpy(input_layout->binds, binds, sizeof(*binds) * count);
@@ -592,6 +593,7 @@ static bool gl4_create_input_layout(gfx_device_t *device, gfx_input_layout_t *in
 
 static void gl4_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout)
 {
+	(void)device;
 	if (!input_layout || !input_layout->handle.u64)
 		return;
 	input_layout->handle.u64 = 0;
@@ -1044,6 +1046,7 @@ static bool gl4_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t
 
 static void gl4_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state)
 {
+	(void)device;
 	if (!state || !state->handle.u64)
 		return;
 	state->handle.u64 = 0;

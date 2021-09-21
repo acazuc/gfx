@@ -587,6 +587,7 @@ static void gl3_delete_attributes_state(gfx_device_t *device, gfx_attributes_sta
 
 static bool gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
 {
+	(void)program;
 	assert(!input_layout->handle.u64);
 	input_layout->device = device;
 	memcpy(input_layout->binds, binds, sizeof(*binds) * count);
@@ -597,6 +598,7 @@ static bool gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *in
 
 static void gl3_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout)
 {
+	(void)device;
 	if (!input_layout || !input_layout->handle.u64)
 		return;
 	input_layout->handle.u64 = 0;
@@ -957,23 +959,13 @@ static void gl3_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t cou
 	for (uint32_t i = 0; i < count; ++i)
 	{
 		const gfx_texture_t *texture = textures[i];
-		if (texture)
+		uint32_t id = texture ? texture->handle.u32[0] : 0;
+		uint32_t dst = start + i;
+		if (GL_DEVICE->textures[dst] != id)
 		{
-			if (GL_DEVICE->textures[i] != texture->handle.u32[0])
-			{
-				GL_DEVICE->textures[i] = texture->handle.u32[0];
-				gl_active_texture(device, i);
-				gl_bind_texture(device, texture);
-			}
-		}
-		else
-		{
-			if (GL_DEVICE->textures[i] != 0)
-			{
-				GL_DEVICE->textures[i] = 0;
-				gl_active_texture(device, i);
-				gl_bind_texture(device, texture);
-			}
+			GL_DEVICE->textures[dst] = id;
+			gl_active_texture(device, dst);
+			gl_bind_texture(device, texture);
 		}
 	}
 }
@@ -1136,6 +1128,7 @@ static bool gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t
 
 static void gl3_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state)
 {
+	(void)device;
 	if (!state || !state->handle.u64)
 		return;
 	state->handle.u64 = 0;
