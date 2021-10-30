@@ -1,5 +1,6 @@
 #include "device.h"
 #include "device_vtable.h"
+#include "window.h"
 #include <stdlib.h>
 
 #if 0
@@ -14,7 +15,7 @@ void gfx_device_delete(gfx_device_t *device)
 	if (!device)
 		return;
 	device->vtable->dtr(device);
-	free(device);
+	GFX_FREE(device);
 }
 
 static bool ctr(gfx_device_t *device, gfx_window_t *window)

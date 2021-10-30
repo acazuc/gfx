@@ -135,9 +135,14 @@ static gfx_window_vtable_t wgl_vtable =
 
 gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
 {
-	gfx_window_t *window = calloc(sizeof(gfx_wgl_window_t), 1);
+	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_wgl_window_t), 1);
 	if (!window)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("malloc failed");
 		return NULL;
+	}
+	memset(window, 0, sizeof(gfx_wgl_window_t));
 	window->vtable = &wgl_vtable;
 	if (!window->vtable->ctr(window, properties))
 		goto err;
@@ -272,6 +277,6 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 
 err:
 	window->vtable->dtr(window);
-	free(window);
+	GFX_FREE(window);
 	return NULL;
 }

@@ -157,18 +157,19 @@ static gfx_window_vtable_t d3d_vtable =
 
 gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
 {
-	gfx_window_t *window = calloc(sizeof(gfx_d3d_window_t), 1);
+	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_d3d_window_t));
 	if (!window)
 	{
 		if (gfx_error_callback)
 			gfx_error_callback("malloc failed");
 		return NULL;
 	}
+	memset(window, 0, sizeof(gfx_d3d_window_t));
 	window->vtable = &d3d_vtable;
 	if (!window->vtable->ctr(window, properties))
 	{
 		window->vtable->dtr(window);
-		free(window);
+		GFX_FREE(window);
 		return NULL;
 	}
 	gfx_win32_ctr(WIN32_WINDOW, window);
@@ -177,7 +178,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 		if (gfx_error_callback)
 			gfx_error_callback("failed to create window");
 		window->vtable->dtr(window);
-		free(window);
+		GFX_FREE(window);
 		return NULL;
 	}
 	IDXGIFactory *factory;
@@ -212,7 +213,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 			gfx_error_callback("failed to get display mode list number");
 		goto err;
 	}
-	modes = (DXGI_MODE_DESC*)malloc(sizeof(*modes) * num_modes);
+	modes = (DXGI_MODE_DESC*)GFX_MALLOC(sizeof(*modes) * num_modes);
 	if (!modes)
 	{
 		if (gfx_error_callback)
@@ -255,7 +256,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 	D3D_WINDOW->swap_chain_desc.Flags = 0;
 	IDXGIOutput_Release(adapter_output);
 	IDXGIFactory_Release(factory);
-	free(modes);
+	GFX_FREE(modes);
 	return window;
 
 err:
@@ -263,9 +264,9 @@ err:
 		IDXGIOutput_Release(adapter_output);
 	if (factory)
 		IDXGIFactory_Release(factory);
-	free(modes);
+	GFX_FREE(modes);
 	window->vtable->dtr(window);
-	free(window);
+	GFX_FREE(window);
 	return NULL;
 }
 

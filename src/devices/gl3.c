@@ -1182,7 +1182,7 @@ static gfx_device_vtable_t gl3_vtable =
 
 gfx_device_t *gfx_gl3_device_new(gfx_window_t *window, gfx_gl_load_addr_t *load_addr)
 {
-	gfx_gl3_device_t *device = malloc(sizeof(*device));
+	gfx_gl3_device_t *device = GFX_MALLOC(sizeof(*device));
 	if (!device)
 		return NULL;
 	gfx_device_t *dev = &device->gl.device;
@@ -1191,7 +1191,7 @@ gfx_device_t *gfx_gl3_device_new(gfx_window_t *window, gfx_gl_load_addr_t *load_
 	if (!dev->vtable->ctr(dev, window))
 	{
 		dev->vtable->dtr(dev);
-		free(device);
+		GFX_FREE(device);
 		return NULL;
 	}
 	return dev;

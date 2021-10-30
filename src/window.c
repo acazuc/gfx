@@ -2,6 +2,7 @@
 #include "./window_vtable.h"
 #include "./device.h"
 #include <stdlib.h>
+#include <string.h>
 
 #if defined(GFX_ENABLE_WINDOW_X11)
 # if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4)
@@ -33,6 +34,7 @@
 #define WIN_DEBUG
 #endif
 
+gfx_memory_t gfx_memory = {NULL};
 gfx_error_callback_t gfx_error_callback = NULL;
 
 static bool ctr(gfx_window_t *window, gfx_window_properties_t *properties)
@@ -64,16 +66,21 @@ static bool ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 	window->y = 0;
 	window->close_requested = false;
 	window->grabbed = false;
-	window->keys = calloc((GFX_KEY_LAST + 7) / 8, 1);
+	window->keys = GFX_MALLOC((GFX_KEY_LAST + 7) / 8);
 	if (!window->keys)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("allocation failed");
 		return false;
+	}
+	memset(window->keys, 0, (GFX_KEY_LAST + 7) / 8);
 	window->device = NULL;
 	return true;
 }
 
 static void dtr(gfx_window_t *window)
 {
-	free(window->keys);
+	GFX_FREE(window->keys);
 	if (window->device)
 		gfx_device_delete(window->device);
 }
@@ -130,7 +137,7 @@ void gfx_delete_window(gfx_window_t *window)
 		return;
 	WIN_DEBUG;
 	window->vtable->dtr(window);
-	free(window);
+	GFX_FREE(window);
 	WIN_DEBUG;
 }
 

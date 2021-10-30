@@ -226,7 +226,7 @@ char *gfx_x11_get_clipboard(gfx_x11_window_t *window)
 	}
 	else if (type == window->atoms[X11_ATOM_INCR])
 	{
-		char *str = malloc(1);
+		char *str = GFX_MALLOC(1);
 		if (!str)
 			return NULL;
 		str[0] = '\0';
@@ -237,10 +237,10 @@ char *gfx_x11_get_clipboard(gfx_x11_window_t *window)
 			XGetWindowProperty(window->display, window->window, window->atoms[X11_ATOM_SELECTION], 0, LONG_MAX, False, AnyPropertyType, &type, &format, &nitems, &bytesAfter, &ret);
 			if (!nitems)
 				return str;
-			char *tmp = realloc(str, len + nitems);
+			char *tmp = GFX_REALLOC(str, len + nitems);
 			if (!tmp)
 			{
-				free(str);
+				GFX_FREE(str);
 				return NULL;
 			}
 			strncat(str, (char*)ret, nitems);

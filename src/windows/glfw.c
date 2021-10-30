@@ -162,9 +162,10 @@ gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t he
 {
 	if (!glfwInit())
 		return NULL;
-	gfx_window_t *window = calloc(sizeof(gfx_glfw_window_t), 1);
+	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_glfw_window_t));
 	if (!window)
 		return NULL;
+	memset(window, 0, sizeof(gfx_glfw_window_t));
 	window->vtable = &glfw_vtable;
 	if (!window->vtable->ctr(window, properties))
 		goto err;
@@ -224,7 +225,7 @@ gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t he
 
 err:
 	window->vtable->dtr(window);
-	free(window);
+	GFX_FREE(window);
 	return NULL;
 }
 

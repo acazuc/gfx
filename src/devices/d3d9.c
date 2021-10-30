@@ -682,6 +682,6 @@ gfx_device_t *gfx_d3d9_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *sw
 
 err:
 	dev->vtable->dtr(dev);
-	free(device);
+	GFX_FREE(device);
 	return NULL;
 }

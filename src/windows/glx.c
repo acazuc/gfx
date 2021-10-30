@@ -233,13 +233,14 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 {
 	XVisualInfo *vi = NULL;
 	GLXFBConfig *configs = NULL;
-	gfx_window_t *window = calloc(sizeof(gfx_glx_window_t), 1);
+	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_glx_window_t));
 	if (!window)
 	{
 		if (gfx_error_callback)
 			gfx_error_callback("allocation failed");
 		return NULL;
 	}
+	memset(window, 0, sizeof(gfx_glx_window_t));
 	window->vtable = &glx_vtable;
 	if (!window->vtable->ctr(window, properties))
 		goto err;
@@ -262,7 +263,7 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 
 err:
 	window->vtable->dtr(window);
-	free(window);
+	GFX_FREE(window);
 	XFree(configs);
 	XFree(vi);
 	return NULL;

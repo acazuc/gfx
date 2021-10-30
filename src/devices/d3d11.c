@@ -365,7 +365,7 @@ static void d3d11_draw(gfx_device_t *device, enum gfx_primitive_type primitive, 
 #endif
 }
 
-static void d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
+static bool d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
 {
 	assert(!state->handle.ptr);
 	state->device = device;
@@ -391,6 +391,7 @@ static void d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *st
 		desc.RenderTarget[i].RenderTargetWriteMask = 0xFF;
 	}
 	D3D11_CALL(ID3D11Device_CreateBlendState, D3D11_DEVICE->d3ddev, &desc, (ID3D11BlendState**)&state->handle.ptr);
+	return true; /* XXX */
 }
 
 static void d3d11_bind_blend_state(gfx_device_t *device, const gfx_blend_state_t *state)
@@ -405,11 +406,10 @@ static void d3d11_delete_blend_state(gfx_device_t *device, gfx_blend_state_t *st
 	if (!state || !state->handle.ptr)
 		return;
 	ID3D11BlendState_Release((ID3D11BlendState*)state->handle.ptr);
-	//queue ?
 	state->handle.ptr = NULL;
 }
 
-static void d3d11_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass)
+static bool d3d11_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass)
 {
 	assert(!state->handle.ptr);
 	state->device = device;
@@ -440,6 +440,7 @@ static void d3d11_create_depth_stencil_state(gfx_device_t *device, gfx_depth_ste
 	desc.BackFace.StencilPassOp = stencil_operations[stencil_pass];
 	desc.BackFace.StencilFunc = compare_functions[stencil_compare];
 	D3D11_CALL(ID3D11Device_CreateDepthStencilState, D3D11_DEVICE->d3ddev, &desc, (ID3D11DepthStencilState**)&state->handle.ptr);
+	return true; /* XXX */
 }
 
 static void d3d11_bind_depth_stencil_state(gfx_device_t *device, const gfx_depth_stencil_state_t *state)
@@ -453,11 +454,10 @@ static void d3d11_delete_depth_stencil_state(gfx_device_t *device, gfx_depth_ste
 	if (!state || !state->handle.ptr)
 		return;
 	ID3D11DepthStencilState_Release((ID3D11DepthStencilState*)state->handle.ptr);
-	//queue ?
 	state->handle.ptr = NULL;
 }
 
-static void d3d11_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor)
+static bool d3d11_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor)
 {
 	assert(!state->handle.ptr);
 	state->device = device;
@@ -476,6 +476,7 @@ static void d3d11_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_s
 	desc.MultisampleEnable = true;
 	desc.AntialiasedLineEnable = true;
 	D3D11_CALL(ID3D11Device_CreateRasterizerState, D3D11_DEVICE->d3ddev, &desc, (ID3D11RasterizerState**)&state->handle.ptr);
+	return true; /* XXX */
 }
 
 static void d3d11_bind_rasterizer_state(gfx_device_t *device, const gfx_rasterizer_state_t *state)
@@ -491,10 +492,9 @@ static void d3d11_delete_rasterizer_state(gfx_device_t *device, gfx_rasterizer_s
 	if (!state || !state->handle.ptr)
 		return;
 	ID3D11RasterizerState_Release((ID3D11RasterizerState*)state->handle.ptr);
-	//queue ?
 }
 
-static void d3d11_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage)
+static bool d3d11_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage)
 {
 	assert(!buffer->handle.ptr);
 	buffer->device = device;
@@ -525,6 +525,7 @@ static void d3d11_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum
 		init_data.SysMemSlicePitch = 0;
 	}
 	D3D11_CALL(ID3D11Device_CreateBuffer, D3D11_DEVICE->d3ddev, &desc, data ? &init_data : NULL, (ID3D11Buffer**)&buffer->handle.ptr);
+	return true; /* XXX */
 }
 
 static void d3d11_set_buffer_data(gfx_device_t *device, gfx_buffer_t *buffer, const void *data, uint32_t size, uint32_t offset)
@@ -541,11 +542,10 @@ static void d3d11_delete_buffer(gfx_device_t *device, gfx_buffer_t *buffer)
 	if (!buffer || !buffer->handle.ptr)
 		return;
 	ID3D11Buffer_Release((ID3D11Buffer*)buffer->handle.ptr);
-	//queue ?
 	buffer->handle.ptr = NULL;
 }
 
-static void d3d11_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
+static bool d3d11_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
 {
 	assert(!state->handle.ptr);
 	state->device = device;
@@ -554,6 +554,7 @@ static void d3d11_create_attributes_state(gfx_device_t *device, gfx_attributes_s
 	state->index_buffer = index_buffer;
 	state->index_type = index_type;
 	state->handle.u64 = 1;
+	return true;
 }
 
 static void d3d11_bind_attributes_state(gfx_device_t *device, const gfx_attributes_state_t *state, const gfx_input_layout_t *input_layout)
@@ -586,11 +587,10 @@ static void d3d11_delete_attributes_state(gfx_device_t *device, gfx_attributes_s
 {
 	if (!state || !state->handle.ptr)
 		return;
-	//XXX async
 	state->handle.ptr = NULL;
 }
 
-static void d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+static bool d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
 {
 	assert(!input_layout->handle.ptr);
 	input_layout->device = device;
@@ -612,6 +612,7 @@ static void d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *
 		desc_nb++;
 	}
 	D3D11_CALL(ID3D11Device_CreateInputLayout, D3D11_DEVICE->d3ddev, desc, desc_nb, program->code, program->code_size, (ID3D11InputLayout**)&input_layout->handle.ptr);
+	return true; /* XXX */
 }
 
 static void d3d11_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout)
@@ -621,7 +622,7 @@ static void d3d11_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *
 	ID3D11InputLayout_Release((ID3D11InputLayout*)input_layout->handle.ptr);
 }
 
-static void d3d11_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth)
+static bool d3d11_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth)
 {
 	assert(!texture->handle.ptr);
 	texture->device = device;
@@ -698,6 +699,7 @@ static void d3d11_create_texture(gfx_device_t *device, gfx_texture_t *texture, e
 	}
 	texture->sampler.u64 = 1;
 	texture->view.u64 = 1;
+	return true;
 }
 
 static void d3d11_set_texture_data(gfx_device_t *device, gfx_texture_t *texture, uint8_t lod, uint32_t offset, uint32_t width, uint32_t height, uint32_t depth, uint32_t size, const void *data)
@@ -781,7 +783,6 @@ static void d3d11_delete_texture(gfx_device_t *device, gfx_texture_t *texture)
 			ID3D11Texture2D_Release((ID3D11Texture2D*)texture->handle.ptr);
 			break;
 	}
-	//queue ?
 	texture->handle.ptr = NULL;
 }
 
@@ -835,7 +836,7 @@ static bool d3d11_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum
 			break;
 	}
 	shader->code_size = ID3D10Blob_GetBufferSize(shader_data);
-	shader->code = (uint8_t*)malloc(shader->code_size);
+	shader->code = GFX_MALLOC(shader->code_size);
 	if (!shader->code)
 		return false;
 	memcpy(shader->code, ID3D10Blob_GetBufferPointer(shader_data), ID3D10Blob_GetBufferSize(shader_data));
@@ -849,10 +850,9 @@ static void d3d11_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 {
 	if (!shader || !shader->handle.ptr)
 		return;
-	free(shader->code);
+	GFX_FREE(shader->code);
 	ID3D11PixelShader_Release((ID3D11PixelShader*)shader->handle.ptr);
 	shader->handle.ptr = NULL;
-	//queue
 }
 
 static bool d3d11_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
@@ -878,7 +878,7 @@ static bool d3d11_create_program(gfx_device_t *device, gfx_program_t *program, c
 		program->geometry_shader.ptr = NULL;
 	}
 	program->code_size = vertex_shader->code_size;
-	program->code = (uint8_t*)malloc(program->code_size);
+	program->code =  GFX_MALLOC(program->code_size);
 	if (!program->code)
 		return false;
 	memcpy(program->code, vertex_shader->code, program->code_size);
@@ -899,6 +899,7 @@ static void d3d11_delete_program(gfx_device_t *device, gfx_program_t *program)
 	ID3D11PixelShader_Release((ID3D11PixelShader*)program->fragment_shader.ptr);
 	if (program->geometry_shader.ptr)
 		ID3D11GeometryShader_Release((ID3D11GeometryShader*)program->geometry_shader.ptr);
+	GFX_FREE(program->code);
 }
 
 static void d3d11_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset)
@@ -996,7 +997,7 @@ static void d3d11_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t c
 	ID3D11DeviceContext_GSSetShaderResources(D3D11_DEVICE->d3dctx, start, count, resource_views);
 }
 
-static void d3d11_create_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
+static bool d3d11_create_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
 {
 	assert(!render_target->handle.ptr);
 	render_target->device = device;
@@ -1004,6 +1005,7 @@ static void d3d11_create_render_target(gfx_device_t *device, gfx_render_target_t
 	for (size_t i = 0; i < sizeof(render_target->colors) / sizeof(*render_target->colors); ++i)
 		render_target->colors[i].handle.ptr = NULL;
 	render_target->depth_stencil.handle.ptr = NULL;
+	return true;
 }
 
 static void d3d11_delete_render_target(gfx_device_t *device, gfx_render_target_t *render_target)
@@ -1079,12 +1081,12 @@ static void d3d11_set_render_target_draw_buffers(gfx_device_t *device, gfx_rende
 
 static void d3d11_resolve_render_target(gfx_device_t *device, const gfx_render_target_t *src, const gfx_render_target_t *dst, uint32_t buffers, uint32_t color_src, uint32_t color_dst)
 {
-	ID3D11Resource *src_res;
-	ID3D11Resource *dst_res;
-	ID3D11DeviceContext_ResolveSubresource(D3D11_DEVICE->d3ddev, dst_res, 0, src_res, 0, formats[src_res->format]);
+	//ID3D11Resource *src_res;
+	//ID3D11Resource *dst_res;
+	//ID3D11DeviceContext_ResolveSubresource(D3D11_DEVICE->d3ddev, dst_res, 0, src_res, 0, formats[src_res->format]);
 }
 
-static void d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+static bool d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
 {
 	assert(!state->handle.u64);
 	state->handle.u64 = ++D3D11_DEVICE->state_idx;
@@ -1093,6 +1095,7 @@ static void d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state
 	state->depth_stencil_state = depth_stencil;
 	state->blend_state = blend;
 	state->input_layout = input_layout;
+	return true;
 }
 
 static void d3d11_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state)
@@ -1157,7 +1160,7 @@ gfx_device_vtable_t d3d11_vtable =
 
 gfx_device_t *gfx_d3d11_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *swap_chain_desc, IDXGISwapChain **swap_chain)
 {
-	gfx_d3d11_device_t *device = (gfx_d3d11_device_t*)malloc(sizeof(*device));
+	gfx_d3d11_device_t *device = GFX_MALLOC(sizeof(*device));
 	if (!device)
 		return NULL;
 	gfx_device_t *dev = &device->device;
@@ -1180,6 +1183,6 @@ gfx_device_t *gfx_d3d11_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *s
 
 err:
 	dev->vtable->dtr(dev);
-	free(device);
+	GFX_FREE(device);
 	return NULL;
 }

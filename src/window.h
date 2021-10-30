@@ -7,6 +7,7 @@ extern "C" {
 
 # include "./events.h"
 # include <stdint.h>
+# include <stddef.h>
 
 typedef struct gfx_device_s gfx_device_t;
 typedef struct gfx_window_s gfx_window_t;
@@ -61,7 +62,19 @@ typedef void(*gfx_expose_callback_t)();
 typedef void(*gfx_close_callback_t)();
 typedef void(*gfx_error_callback_t)(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
+typedef struct gfx_memory_s
+{
+	void *(*malloc)(size_t size);
+	void *(*realloc)(void *ptr, size_t size);
+	void (*free)(void *ptr);
+} gfx_memory_t;
+
+#define GFX_MALLOC(size) (gfx_memory.malloc ? gfx_memory.malloc(size) : malloc(size))
+#define GFX_REALLOC(ptr, size) (gfx_memory.realloc ? gfx_memory.realloc(ptr, size) : realloc(ptr, size))
+#define GFX_FREE(ptr) (gfx_memory.free ? gfx_memory.free(ptr) : free(ptr))
+
 extern gfx_error_callback_t gfx_error_callback;
+extern gfx_memory_t gfx_memory;
 
 typedef struct gfx_window_properties_s
 {
