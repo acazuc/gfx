@@ -275,14 +275,20 @@ gfx_cursor_t gfx_x11_create_native_cursor(gfx_x11_window_t *window, enum gfx_nat
 	return (gfx_cursor_t)XCreateFontCursor(window->display, cursors[native_cursor]);
 }
 
-gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height)
+gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
 	XcursorImage *image = XcursorImageCreate(width, height);
 	if (!image)
 		return NULL;
-	image->xhot = 0;
-	image->yhot = 0;
-	memcpy(image->pixels, data, width * height * 4);
+	image->xhot = xhot;
+	image->yhot = yhot;
+	for (size_t i = 0; i < width * height * 4; i += 4)
+	{
+		((uint8_t*)image->pixels)[i + 0] = ((uint8_t*)data)[i + 2];
+		((uint8_t*)image->pixels)[i + 1] = ((uint8_t*)data)[i + 1];
+		((uint8_t*)image->pixels)[i + 2] = ((uint8_t*)data)[i + 0];
+		((uint8_t*)image->pixels)[i + 3] = ((uint8_t*)data)[i + 3];
+	}
 	Cursor cursor = XcursorImageLoadCursor(window->display, image);
 	XcursorImageDestroy(image);
 	return (gfx_cursor_t)cursor;

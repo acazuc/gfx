@@ -149,7 +149,7 @@ void gfx_window_resize(gfx_window_t *window, uint32_t width, uint32_t height);
 char *gfx_window_get_clipboard(gfx_window_t *window);
 void gfx_window_set_clipboard(gfx_window_t *window, const char *clipboard);
 gfx_cursor_t gfx_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor);
-gfx_cursor_t gfx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height);
+gfx_cursor_t gfx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot);
 void gfx_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor);
 void gfx_set_cursor(gfx_window_t *window, gfx_cursor_t cursor);
 void gfx_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y);

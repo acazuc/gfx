@@ -123,9 +123,9 @@ static gfx_cursor_t glx_create_native_cursor(gfx_window_t *window, enum gfx_nati
 	return gfx_x11_create_native_cursor(X11_WINDOW, native_cursor);
 }
 
-static gfx_cursor_t glx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+static gfx_cursor_t glx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
-	return gfx_x11_create_cursor(X11_WINDOW, data, width, height);
+	return gfx_x11_create_cursor(X11_WINDOW, data, width, height, xhot, yhot);
 }
 
 static void glx_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)

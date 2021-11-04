@@ -61,7 +61,7 @@ void gfx_x11_ungrab_cursor(gfx_x11_window_t *window);
 char *gfx_x11_get_clipboard(gfx_x11_window_t *window);
 void gfx_x11_set_clipboard(gfx_x11_window_t *window, const char *text);
 gfx_cursor_t gfx_x11_create_native_cursor(gfx_x11_window_t *window, enum gfx_native_cursor cursor);
-gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height);
+gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot);
 void gfx_x11_delete_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
 void gfx_x11_set_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
 void gfx_x11_set_mouse_position(gfx_x11_window_t *window, int32_t x, int32_t y);

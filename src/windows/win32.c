@@ -1,4 +1,6 @@
 #include "win32.h"
+#include <jks/utf16.h>
+#include <jks/utf8.h>
 #include <windowsx.h>
 
 #ifndef WM_MOUSEHWHEEL
@@ -402,7 +404,57 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		}
 		case WM_CHAR:
 		{
-			//XXX
+			if (wparam == UNICODE_NOCHAR)
+				return true;
+			if (window->winref->char_callback)
+			{
+				gfx_char_event_t event;
+				event.used = false;
+				char tmp[2];
+				tmp[0] = wparam >> 8;
+				tmp[1] = wparam;
+				char *iter = tmp;
+				if (utf16_decode((const char**)&iter, &event.codepoint))
+				{
+					iter = event.utf8;
+					if (utf8_encode(&iter, event.codepoint))
+					{
+						window->winref->char_callback(&event);
+					}
+					else
+					{
+						if (gfx_error_callback)
+							gfx_error_callback("invalid event codepoint");
+					}
+				}
+				else
+				{
+					if (gfx_error_callback)
+						gfx_error_callback("invalid event codepoint");
+				}
+			}
+			break;
+		}
+		case WM_UNICHAR:
+		{
+			if (wparam == UNICODE_NOCHAR)
+				return true;
+			if (window->winref->char_callback)
+			{
+				gfx_char_event_t event;
+				event.used = false;
+				event.codepoint = wparam;
+				char *iter = event.utf8;
+				if (utf8_encode(&iter, event.codepoint))
+				{
+					window->winref->char_callback(&event);
+				}
+				else
+				{
+					if (gfx_error_callback)
+						gfx_error_callback("invalid event codepoint");
+				}
+			}
 			break;
 		}
 		case WM_NCHITTEST:
@@ -511,25 +563,37 @@ gfx_cursor_t gfx_win32_create_native_cursor(gfx_win32_window_t *window, enum gfx
 	return LoadCursor(NULL, cursors[cursor]);
 }
 
-gfx_cursor_t gfx_win32_create_cursor(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height)
+gfx_cursor_t gfx_win32_create_cursor(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
 	gfx_cursor_t cursor = NULL;
+	char *tmp = NULL;
 	HBITMAP mask;
 	HBITMAP color;
 	ICONINFO iconinfo;
+	tmp = GFX_MALLOC(width * height * 4);
+	if (!tmp)
+		goto end;
+	for (size_t i = 0; i < width * height * 4; i += 4)
+	{
+		((uint8_t*)tmp)[i + 0] = ((uint8_t*)data)[i + 2];
+		((uint8_t*)tmp)[i + 1] = ((uint8_t*)data)[i + 1];
+		((uint8_t*)tmp)[i + 2] = ((uint8_t*)data)[i + 0];
+		((uint8_t*)tmp)[i + 3] = ((uint8_t*)data)[i + 3];
+	}
 	mask = CreateBitmap(width, height, 1, 1, NULL);
-	color = CreateBitmap(width, height, 1, 32, data);
+	color = CreateBitmap(width, height, 1, 32, tmp);
 	if (!mask || !color)
 		goto end;
 	iconinfo.fIcon = false;
-	iconinfo.xHotspot = 0;
-	iconinfo.yHotspot = 0;
+	iconinfo.xHotspot = xhot;
+	iconinfo.yHotspot = yhot;
 	iconinfo.hbmMask = mask;
 	iconinfo.hbmColor = color;
 	cursor = CreateIconIndirect(&iconinfo);
 end:
 	DeleteObject(color);
 	DeleteObject(mask);
+	GFX_FREE(tmp);
 	return cursor;
 }
 

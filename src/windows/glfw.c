@@ -141,14 +141,14 @@ static gfx_cursor_t glfw_create_native_cursor(gfx_window_t *window, enum gfx_nat
 	return glfwCreateStandardCursor(cursors[cursor]);
 }
 
-static gfx_cursor_t glfw_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+static gfx_cursor_t glfw_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
 	(void)window;
 	GLFWimage image;
 	image.width = width;
 	image.height = height;
 	image.pixels = (unsigned char*)data;
-	return glfwCreateCursor(&image, 0, 0);
+	return glfwCreateCursor(&image, xhot, yhot);
 }
 
 static void glfw_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
