@@ -118,9 +118,24 @@ static void wgl_set_clipboard(gfx_window_t *window, const char *text)
 	gfx_win32_set_clipboard(WIN32_WINDOW, text);
 }
 
-static void wgl_set_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
+static gfx_cursor_t wgl_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
 {
-	gfx_win32_set_native_cursor(WIN32_WINDOW, cursor);
+	return gfx_win32_create_native_cursor(WIN32_WINDOW, cursor);
+}
+
+static gfx_cursor_t wgl_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	return gfx_win32_create_cursor(WIN32_WINDOW, data, width, height);
+}
+
+static void wgl_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	gfx_win32_delete_cursor(WIN32_WINDOW, cursor);
+}
+
+static void wgl_set_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	gfx_win32_set_cursor(WIN32_WINDOW, cursor);
 }
 
 static void wgl_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
@@ -135,7 +150,7 @@ static gfx_window_vtable_t wgl_vtable =
 
 gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
 {
-	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_wgl_window_t), 1);
+	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_wgl_window_t));
 	if (!window)
 	{
 		if (gfx_error_callback)

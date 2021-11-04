@@ -10,13 +10,26 @@
 
 extern const gfx_window_vtable_t gfx_window_vtable;
 
+static const unsigned int cursors[GFX_CURSOR_LAST] =
+{
+	[GFX_CURSOR_ARROW] = XC_arrow,
+	[GFX_CURSOR_CROSS] = XC_crosshair,
+	[GFX_CURSOR_HAND] = XC_hand1,
+	[GFX_CURSOR_IBEAM] = XC_xterm,
+	[GFX_CURSOR_NO] = XC_X_cursor,
+	[GFX_CURSOR_SIZEALL] = XC_fleur,
+	[GFX_CURSOR_VRESIZE] = XC_sb_v_double_arrow,
+	[GFX_CURSOR_HRESIZE] = XC_sb_h_double_arrow,
+	[GFX_CURSOR_WAIT] = XC_watch,
+};
+
 static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next);
 static enum gfx_key_code get_key_code(uint32_t x_key_code);
 static uint32_t get_mods(uint32_t state);
+static void update_cursor(gfx_x11_window_t *window);
 
 bool gfx_x11_create_window(gfx_x11_window_t *window, const char *title, uint32_t width, uint32_t height, XVisualInfo *vi)
 {
-	XcursorImage *image;
 	window->clipboard = NULL;
 	window->root = DefaultRootWindow(window->display);
 	Colormap cmap = XCreateColormap(window->display, window->root, vi->visual, AllocNone);
@@ -47,21 +60,8 @@ bool gfx_x11_create_window(gfx_x11_window_t *window, const char *title, uint32_t
 	else
 		window->xic = NULL;
 	XFlush(window->display);
-	window->cursors[GFX_CURSOR_ARROW] = XCreateFontCursor(window->display, XC_arrow);
-	window->cursors[GFX_CURSOR_CROSS] = XCreateFontCursor(window->display, XC_crosshair);
-	window->cursors[GFX_CURSOR_HAND] = XCreateFontCursor(window->display, XC_hand1);
-	window->cursors[GFX_CURSOR_IBEAM] = XCreateFontCursor(window->display, XC_xterm);
-	window->cursors[GFX_CURSOR_NO] = XCreateFontCursor(window->display, XC_X_cursor);
-	window->cursors[GFX_CURSOR_SIZEALL] = XCreateFontCursor(window->display, XC_fleur);
-	window->cursors[GFX_CURSOR_VRESIZE] = XCreateFontCursor(window->display, XC_sb_v_double_arrow);
-	window->cursors[GFX_CURSOR_HRESIZE] = XCreateFontCursor(window->display, XC_sb_h_double_arrow);
-	window->cursors[GFX_CURSOR_WAIT] = XCreateFontCursor(window->display, XC_watch);
-	image = XcursorImageCreate(16, 16);
-	image->xhot = 0;
-	image->yhot = 0;
-	memset(image->pixels, 0, 16 * 16 * 4);
-	window->cursors[GFX_CURSOR_BLANK] = XcursorImageLoadCursor(window->display, image);
-	XcursorImageDestroy(image);
+	window->blank_cursor = (Cursor)gfx_x11_create_native_cursor(window, GFX_CURSOR_BLANK);
+	window->hidden_cursor = false;
 	return true;
 }
 
@@ -75,17 +75,14 @@ bool gfx_x11_ctr(gfx_x11_window_t *window, gfx_window_t *winref)
 
 void gfx_x11_dtr(gfx_x11_window_t *window)
 {
-	for (size_t i = 0; i < sizeof(window->cursors) / sizeof(*window->cursors); ++i)
-	{
-		if (window->cursors[i])
-			XFreeCursor(window->display, window->cursors[i]);
-	}
 	if (window->xic)
 		XDestroyIC(window->xic);
 	if (window->xim)
 		XCloseIM(window->xim);
 	if (window->display)
 		XCloseDisplay(window->display);
+	if (window->blank_cursor)
+		XFreeCursor(window->display, window->blank_cursor);
 	free(window->clipboard);
 }
 
@@ -147,7 +144,8 @@ void gfx_x11_grab_cursor(gfx_x11_window_t *window)
 	event.mask_len = sizeof(mask);
 	XISelectEvents(window->display, window->root, &event, 1);
 	XGrabPointer(window->display, window->window, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, window->root, None, CurrentTime);
-	gfx_x11_set_native_cursor(window, GFX_CURSOR_BLANK);
+	window->hidden_cursor = true;
+	update_cursor(window);
 	window->winref->grabbed = true;
 	window->winref->virtual_x = window->winref->mouse_x;
 	window->winref->virtual_y = window->winref->mouse_y;
@@ -164,7 +162,8 @@ void gfx_x11_ungrab_cursor(gfx_x11_window_t *window)
 	event.mask_len = sizeof(mask);
 	XISelectEvents(window->display, window->root, &event, 1);
 	XUngrabPointer(window->display, CurrentTime);
-	gfx_x11_set_native_cursor(window, GFX_CURSOR_ARROW);
+	window->hidden_cursor = false;
+	update_cursor(window);
 	gfx_x11_set_mouse_position(window, window->prev_mouse_x, window->prev_mouse_y);
 	window->winref->grabbed = false;
 }
@@ -259,16 +258,62 @@ void gfx_x11_set_clipboard(gfx_x11_window_t *window, const char *clipboard)
 	XSetSelectionOwner(window->display, window->atoms[X11_ATOM_CLIPBOARD], window->window, CurrentTime);
 }
 
-void gfx_x11_set_native_cursor(gfx_x11_window_t *window, enum gfx_native_cursor cursor)
+gfx_cursor_t gfx_x11_create_native_cursor(gfx_x11_window_t *window, enum gfx_native_cursor native_cursor)
 {
-	if (cursor >= GFX_CURSOR_LAST)
+	if (native_cursor == GFX_CURSOR_BLANK)
+	{
+		XcursorImage *image = XcursorImageCreate(16, 16);
+		if (!image)
+			return NULL;
+		image->xhot = 0;
+		image->yhot = 0;
+		memset(image->pixels, 0, 16 * 16 * 4);
+		Cursor cursor = XcursorImageLoadCursor(window->display, image);
+		XcursorImageDestroy(image);
+		return (gfx_cursor_t)cursor;
+	}
+	return (gfx_cursor_t)XCreateFontCursor(window->display, cursors[native_cursor]);
+}
+
+gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	XcursorImage *image = XcursorImageCreate(width, height);
+	if (!image)
+		return NULL;
+	image->xhot = 0;
+	image->yhot = 0;
+	memcpy(image->pixels, data, width * height * 4);
+	Cursor cursor = XcursorImageLoadCursor(window->display, image);
+	XcursorImageDestroy(image);
+	return (gfx_cursor_t)cursor;
+}
+
+void gfx_x11_delete_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor)
+{
+	if (!cursor)
 		return;
-	XDefineCursor(window->display, window->window, window->cursors[cursor]);
+	XFreeCursor(window->display, (Cursor)cursor);
+}
+
+void gfx_x11_set_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor)
+{
+	window->cursor = (Cursor)cursor;
+	update_cursor(window);
 }
 
 void gfx_x11_set_mouse_position(gfx_x11_window_t *window, int32_t x, int32_t y)
 {
 	XWarpPointer(window->display, None, window->window, 0, 0, 0, 0, x, y);
+}
+
+static void update_cursor(gfx_x11_window_t *window)
+{
+	if (window->hidden_cursor)
+	{
+		XDefineCursor(window->display, window->window, window->blank_cursor);
+		return;
+	}
+	XDefineCursor(window->display, window->window, window->cursor);
 }
 
 static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)

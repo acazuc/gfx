@@ -34,7 +34,8 @@ typedef struct gfx_x11_window_s
 {
 	gfx_window_t *winref;
 	Display *display;
-	Cursor cursors[GFX_CURSOR_LAST];
+	Cursor blank_cursor;
+	Cursor cursor;
 	Window window;
 	Window root;
 	Atom atoms[X11_ATOM_LAST];
@@ -43,6 +44,7 @@ typedef struct gfx_x11_window_s
 	int32_t prev_mouse_x;
 	int32_t prev_mouse_y;
 	char *clipboard;
+	bool hidden_cursor;
 } gfx_x11_window_t;
 
 bool gfx_x11_create_window(gfx_x11_window_t *window, const char *title, uint32_t width, uint32_t height, XVisualInfo *vi);
@@ -58,7 +60,10 @@ void gfx_x11_grab_cursor(gfx_x11_window_t *window);
 void gfx_x11_ungrab_cursor(gfx_x11_window_t *window);
 char *gfx_x11_get_clipboard(gfx_x11_window_t *window);
 void gfx_x11_set_clipboard(gfx_x11_window_t *window, const char *text);
-void gfx_x11_set_native_cursor(gfx_x11_window_t *window, enum gfx_native_cursor cursor);
+gfx_cursor_t gfx_x11_create_native_cursor(gfx_x11_window_t *window, enum gfx_native_cursor cursor);
+gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height);
+void gfx_x11_delete_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
+void gfx_x11_set_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
 void gfx_x11_set_mouse_position(gfx_x11_window_t *window, int32_t x, int32_t y);
 
 # ifdef __cplusplus

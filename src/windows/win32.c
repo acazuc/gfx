@@ -5,6 +5,20 @@
 # define WM_MOUSEHWHEEL 0x020E
 #endif
 
+static const char *cursors[GFX_CURSOR_LAST] =
+{
+	[GFX_CURSOR_ARROW] = IDC_ARROW,
+	[GFX_CURSOR_CROSS] = IDC_CROSS,
+	[GFX_CURSOR_HAND] = IDC_HAND,
+	[GFX_CURSOR_IBEAM] = IDC_IBEAM,
+	[GFX_CURSOR_NO] = IDC_NO,
+	[GFX_CURSOR_SIZEALL] = IDC_SIZEALL,
+	[GFX_CURSOR_VRESIZE] = IDC_SIZENS,
+	[GFX_CURSOR_HRESIZE] = IDC_SIZEWE,
+	[GFX_CURSOR_WAIT] = IDC_WAIT,
+	[GFX_CURSOR_BLANK] = NULL,
+};
+
 static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 static void update_cursor(gfx_win32_window_t *window);
 static uint32_t get_mods();
@@ -14,8 +28,8 @@ void gfx_win32_ctr(gfx_win32_window_t *window, gfx_window_t *winref)
 {
 	window->winref = winref;
 	window->application_name = "Wow";
-	window->cursor = IDC_ARROW;
 	window->window = NULL;
+	window->cursor = NULL;
 	window->hidden_cursor = false;
 	window->mouse_hover = false;
 }
@@ -491,43 +505,45 @@ void gfx_win32_set_clipboard(gfx_win32_window_t *window, const char *text)
 {
 }
 
-void gfx_win32_set_native_cursor(gfx_win32_window_t *window, enum gfx_native_cursor cursor)
+gfx_cursor_t gfx_win32_create_native_cursor(gfx_win32_window_t *window, enum gfx_native_cursor cursor)
 {
-	switch (cursor)
-	{
-		case GFX_CURSOR_ARROW:
-			window->cursor = IDC_ARROW;
-			break;
-		case GFX_CURSOR_CROSS:
-			window->cursor = IDC_CROSS;
-			break;
-		case GFX_CURSOR_HAND:
-			window->cursor = IDC_HAND;
-			break;
-		case GFX_CURSOR_IBEAM:
-			window->cursor = IDC_IBEAM;
-			break;
-		case GFX_CURSOR_NO:
-			window->cursor = IDC_NO;
-			break;
-		case GFX_CURSOR_SIZEALL:
-			window->cursor = IDC_SIZEALL;
-			break;
-		case GFX_CURSOR_VRESIZE:
-			window->cursor = IDC_SIZENS;
-			break;
-		case GFX_CURSOR_HRESIZE:
-			window->cursor = IDC_SIZEWE;
-			break;
-		case GFX_CURSOR_WAIT:
-			window->cursor = IDC_WAIT;
-			break;
-		case GFX_CURSOR_BLANK:
-			window->cursor = NULL;
-			break;
-		case GFX_CURSOR_LAST:
-			return;
-	}
+	(void)window;
+	return LoadCursor(NULL, cursors[cursor]);
+}
+
+gfx_cursor_t gfx_win32_create_cursor(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	gfx_cursor_t cursor = NULL;
+	HBITMAP mask;
+	HBITMAP color;
+	ICONINFO iconinfo;
+	mask = CreateBitmap(width, height, 1, 1, NULL);
+	color = CreateBitmap(width, height, 1, 32, data);
+	if (!mask || !color)
+		goto end;
+	iconinfo.fIcon = false;
+	iconinfo.xHotspot = 0;
+	iconinfo.yHotspot = 0;
+	iconinfo.hbmMask = mask;
+	iconinfo.hbmColor = color;
+	cursor = CreateIconIndirect(&iconinfo);
+end:
+	DeleteObject(color);
+	DeleteObject(mask);
+	return cursor;
+}
+
+void gfx_win32_delete_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor)
+{
+	(void)window;
+	if (!cursor)
+		return;
+	DestroyCursor((HCURSOR)cursor);
+}
+
+void gfx_win32_set_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor)
+{
+	window->cursor = cursor;
 	update_cursor(window);
 }
 
@@ -543,7 +559,7 @@ static void update_cursor(gfx_win32_window_t *window)
 		SetCursor(NULL);
 		return;
 	}
-	SetCursor(LoadCursor(NULL, window->cursor));
+	SetCursor(window->cursor);
 }
 
 static enum gfx_key_code get_key_code(int key_code)

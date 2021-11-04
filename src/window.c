@@ -241,14 +241,37 @@ void gfx_window_set_clipboard(gfx_window_t *window, const char *clipboard)
 	WIN_DEBUG;
 }
 
-void gfx_window_set_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
+gfx_cursor_t gfx_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor native_cursor)
 {
 	WIN_DEBUG;
-	window->vtable->set_native_cursor(window, cursor);
+	gfx_cursor_t cursor = window->vtable->create_native_cursor(window, native_cursor);
+	WIN_DEBUG;
+	return cursor;
+}
+
+gfx_cursor_t gfx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	WIN_DEBUG;
+	gfx_cursor_t cursor = window->vtable->create_cursor(window, data, width, height);
+	WIN_DEBUG;
+	return cursor;
+}
+
+void gfx_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	WIN_DEBUG;
+	window->vtable->delete_cursor(window, cursor);
 	WIN_DEBUG;
 }
 
-void gfx_window_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
+void gfx_set_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	WIN_DEBUG;
+	window->vtable->set_cursor(window, cursor);
+	WIN_DEBUG;
+}
+
+void gfx_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
 {
 	WIN_DEBUG;
 	window->vtable->set_mouse_position(window, x, y);

@@ -140,9 +140,24 @@ static void d3d_set_clipboard(gfx_window_t *window, const char *text)
 	gfx_win32_set_clipboard(WIN32_WINDOW, text);
 }
 
-static void d3d_set_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
+static gfx_cursor_t d3d_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
 {
-	gfx_win32_set_native_cursor(WIN32_WINDOW, cursor);
+	return gfx_win32_create_native_cursor(WIN32_WINDOW, cursor);
+}
+
+static gfx_cursor_t d3d_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	return gfx_win32_create_cursor(WIN32_WINDOW, data, width, height);
+}
+
+static void d3d_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	gfx_win32_delete_cursor(WIN32_WINDOW, cursor);
+}
+
+static void d3d_set_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	gfx_win32_set_cursor(WIN32_WINDOW, cursor);
 }
 
 static void d3d_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)

@@ -11,11 +11,24 @@ typedef struct gfx_glfw_window_s
 {
 	gfx_gl_window_t gl;
 	GLFWwindow *window;
-	GLFWcursor *cursors[GFX_CURSOR_LAST];
 } gfx_glfw_window_t;
 
 #define GL_WINDOW ((gfx_gl_window_t*)window)
 #define GLFW_WINDOW ((gfx_glfw_window_t*)window)
+
+static const int cursors[GFX_CURSOR_LAST] =
+{
+	[GFX_CURSOR_ARROW] = GLFW_ARROW_CURSOR,
+	[GFX_CURSOR_CROSS] = GLFW_CROSSHAIR_CURSOR,
+	[GFX_CURSOR_HAND] = GLFW_HAND_CURSOR,
+	[GFX_CURSOR_IBEAM] = GLFW_IBEAM_CURSOR,
+	[GFX_CURSOR_NO] = GLFW_ARROW_CURSOR,
+	[GFX_CURSOR_SIZEALL] = GLFW_ARROW_CURSOR,
+	[GFX_CURSOR_VRESIZE] = GLFW_VRESIZE_CURSOR,
+	[GFX_CURSOR_HRESIZE] = GLFW_HRESIZE_CURSOR,
+	[GFX_CURSOR_WAIT] = GLFW_ARROW_CURSOR,
+	[GFX_CURSOR_BLANK] = 0,
+};
 
 static void on_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 static void on_character_callback(GLFWwindow *window, unsigned int codepoint);
@@ -39,31 +52,11 @@ static void *get_proc_address(const char *name)
 
 static bool glfw_ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 {
-	static const int cursors[GFX_CURSOR_LAST] =
-	{
-		GLFW_ARROW_CURSOR,
-		GLFW_CROSSHAIR_CURSOR,
-		GLFW_HAND_CURSOR,
-		GLFW_IBEAM_CURSOR,
-		GLFW_ARROW_CURSOR,
-		GLFW_ARROW_CURSOR,
-		GLFW_VRESIZE_CURSOR,
-		GLFW_HRESIZE_CURSOR,
-		GLFW_ARROW_CURSOR,
-		0,
-	};
-	for (size_t i = 0; i < sizeof(cursors) / sizeof(*cursors); ++i)
-	{
-		if (cursors[i] != 0)
-			GLFW_WINDOW->cursors[i] = glfwCreateStandardCursor(cursors[i]);
-	}
 	return gfx_window_vtable.ctr(window, properties);
 }
 
 static void glfw_dtr(gfx_window_t *window)
 {
-	for (size_t i = 0; i < sizeof(GLFW_WINDOW->cursors) / sizeof(*GLFW_WINDOW->cursors); ++i)
-		glfwDestroyCursor(GLFW_WINDOW->cursors[i]);
 	glfwDestroyWindow(GLFW_WINDOW->window);
 	gfx_window_vtable.dtr(window);
 }
@@ -143,9 +136,32 @@ static void glfw_set_clipboard(gfx_window_t *window, const char *text)
 	glfwSetClipboardString(GLFW_WINDOW->window, text);
 }
 
-static void glfw_set_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
+static gfx_cursor_t glfw_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
 {
-	glfwSetCursor(GLFW_WINDOW->window, GLFW_WINDOW->cursors[cursor]);
+	return glfwCreateStandardCursor(cursors[cursor]);
+}
+
+static gfx_cursor_t glfw_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	(void)window;
+	GLFWimage image;
+	image.width = width;
+	image.height = height;
+	image.pixels = (unsigned char*)data;
+	return glfwCreateCursor(&image, 0, 0);
+}
+
+static void glfw_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	(void)window;
+	if (!cursor)
+		return;
+	glfwDestroyCursor((GLFWcursor*)cursor);
+}
+
+static void glfw_set_cursor(gfx_window_t *window, gfx_cursor_t cursor)
+{
+	glfwSetCursor(GLFW_WINDOW->window, cursor);
 }
 
 static void glfw_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)

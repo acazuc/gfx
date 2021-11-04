@@ -44,6 +44,8 @@ enum gfx_native_cursor
 	GFX_CURSOR_LAST
 };
 
+typedef void* gfx_cursor_t;
+
 typedef void(*gfx_key_down_callback_t)(gfx_key_event_t *event);
 typedef void(*gfx_key_press_callback_t)(gfx_key_event_t *event);
 typedef void(*gfx_key_up_callback_t)(gfx_key_event_t *event);
@@ -146,7 +148,10 @@ void gfx_window_set_title(gfx_window_t *window, const char *title);
 void gfx_window_resize(gfx_window_t *window, uint32_t width, uint32_t height);
 char *gfx_window_get_clipboard(gfx_window_t *window);
 void gfx_window_set_clipboard(gfx_window_t *window, const char *clipboard);
-void gfx_set_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor);
+gfx_cursor_t gfx_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor);
+gfx_cursor_t gfx_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height);
+void gfx_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor);
+void gfx_set_cursor(gfx_window_t *window, gfx_cursor_t cursor);
 void gfx_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y);
 int32_t gfx_get_mouse_x(gfx_window_t *window);
 int32_t gfx_get_mouse_y(gfx_window_t *window);
