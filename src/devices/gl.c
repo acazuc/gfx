@@ -109,6 +109,28 @@ const bool gfx_gl_attribute_float[34] =
 	true, true, false, false,
 };
 
+static inline void *mem_malloc(size_t size)
+{
+	return GFX_MALLOC(size);
+}
+
+static inline void *mem_realloc(void *ptr, size_t size)
+{
+	return GFX_REALLOC(ptr, size);
+}
+
+static inline void mem_free(void *ptr)
+{
+	return GFX_FREE(ptr);
+}
+
+static const jks_array_memory_fn_t array_memory_fn =
+{
+	.malloc = mem_malloc,
+	.realloc = mem_realloc,
+	.free = mem_free,
+};
+
 void gfx_gl_errors(uint32_t err, const char *fn, const char *file, int line)
 {
 #define TEST_ERR(code) \
@@ -284,13 +306,13 @@ static bool gl_ctr(gfx_device_t *device, gfx_window_t *window)
 	GL_LOAD_PROC(GL_DEVICE, Disable);
 	GL_LOAD_PROC(GL_DEVICE, GetError);
 	memset(GL_DEVICE->states, 0, sizeof(GL_DEVICE->states));
-	jks_array_init(&GL_DEVICE->delete_render_buffers, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_frame_buffers, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_vertex_arrays, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_programs, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_buffers, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_shaders, sizeof(uint32_t), NULL);
-	jks_array_init(&GL_DEVICE->delete_textures, sizeof(uint32_t), NULL);
+	jks_array_init(&GL_DEVICE->delete_render_buffers, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_frame_buffers, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_vertex_arrays, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_programs, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_buffers, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_shaders, sizeof(uint32_t), NULL, &array_memory_fn);
+	jks_array_init(&GL_DEVICE->delete_textures, sizeof(uint32_t), NULL, &array_memory_fn);
 	memset(GL_DEVICE->textures, 0, sizeof(GL_DEVICE->textures));
 	GL_DEVICE->blend_equation_c = GFX_EQUATION_ADD;
 	GL_DEVICE->blend_equation_a = GFX_EQUATION_ADD;
