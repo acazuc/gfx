@@ -132,7 +132,7 @@ struct gfx_window_s
 	bool grabbed;
 };
 
-gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context);
+gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties);
 void gfx_delete_window(gfx_window_t *window);
 bool gfx_create_device(gfx_window_t *window);
 void gfx_window_show(gfx_window_t *window);
@@ -145,6 +145,7 @@ void gfx_window_swap_buffers(gfx_window_t *window);
 void gfx_window_make_current(gfx_window_t *window);
 void gfx_window_set_swap_interval(gfx_window_t *window, int interval);
 void gfx_window_set_title(gfx_window_t *window, const char *title);
+void gfx_window_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height);
 void gfx_window_resize(gfx_window_t *window, uint32_t width, uint32_t height);
 char *gfx_window_get_clipboard(gfx_window_t *window);
 void gfx_window_set_clipboard(gfx_window_t *window, const char *clipboard);

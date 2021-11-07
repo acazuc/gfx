@@ -177,6 +177,23 @@ void gfx_x11_set_title(gfx_x11_window_t *window, const char *title)
 	XFlush(window->display);
 }
 
+void gfx_x11_set_icon(gfx_x11_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	long *image = GFX_MALLOC((width * height + 2) * sizeof(long));
+	if (!image)
+		return;
+	image[0] = width;
+	image[1] = height;
+	for (size_t i = 0; i < width * height; ++i)
+		image[2 + i] = ((long)((uint8_t*)data)[i * 4 + 0] << 16)
+		             | ((long)((uint8_t*)data)[i * 4 + 1] << 8)
+		             | ((long)((uint8_t*)data)[i * 4 + 2] << 0)
+		             | ((long)((uint8_t*)data)[i * 4 + 3] << 24);
+	XChangeProperty(window->display, window->window, window->atoms[X11_ATOM_ICON], XA_CARDINAL, 32, PropModeReplace, (uint8_t*)image, width * height + 2);
+	XFlush(window->display);
+	GFX_FREE(image);
+}
+
 void gfx_x11_resize(gfx_x11_window_t *window, uint32_t width, uint32_t height)
 {
 	XResizeWindow(window->display, window->window, width, height);

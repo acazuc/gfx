@@ -107,6 +107,48 @@ void gfx_win32_set_title(gfx_win32_window_t *window, const char *title)
 	SetWindowTextA(window->window, title);
 }
 
+static HANDLE build_icon(bool cursor, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
+{
+	HANDLE icon = NULL;
+	char *tmp = NULL;
+	HBITMAP mask;
+	HBITMAP color;
+	ICONINFO iconinfo;
+	tmp = GFX_MALLOC(width * height * 4);
+	if (!tmp)
+		goto end;
+	for (size_t i = 0; i < width * height * 4; i += 4)
+	{
+		((uint8_t*)tmp)[i + 0] = ((uint8_t*)data)[i + 2];
+		((uint8_t*)tmp)[i + 1] = ((uint8_t*)data)[i + 1];
+		((uint8_t*)tmp)[i + 2] = ((uint8_t*)data)[i + 0];
+		((uint8_t*)tmp)[i + 3] = ((uint8_t*)data)[i + 3];
+	}
+	mask = CreateBitmap(width, height, 1, 1, NULL);
+	color = CreateBitmap(width, height, 1, 32, tmp);
+	if (!mask || !color)
+		goto end;
+	iconinfo.fIcon = !cursor;
+	iconinfo.xHotspot = xhot;
+	iconinfo.yHotspot = yhot;
+	iconinfo.hbmMask = mask;
+	iconinfo.hbmColor = color;
+	icon = CreateIconIndirect(&iconinfo);
+end:
+	DeleteObject(color);
+	DeleteObject(mask);
+	GFX_FREE(tmp);
+	return icon;
+}
+
+void gfx_win32_set_icon(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	HANDLE icon = build_icon(false, data, width, height, 0, 0);
+	SendMessage(window->window, WM_SETICON, ICON_BIG, (LPARAM)icon);
+	SendMessage(window->window, WM_SETICON, ICON_SMALL, (LPARAM)icon);
+	DestroyIcon(icon);
+}
+
 static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	gfx_win32_window_t *window = (gfx_win32_window_t*)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
@@ -485,6 +527,7 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 
 void gfx_win32_poll_events(gfx_win32_window_t *window)
 {
+	(void)window;
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
@@ -550,11 +593,43 @@ void gfx_win32_ungrab_cursor(gfx_win32_window_t *window)
 
 char *gfx_win32_get_clipboard(gfx_win32_window_t *window)
 {
-	return strdup("");
+	if (!OpenClipboard(window->window))
+		return NULL;
+	HANDLE object = GetClipboardData(CF_TEXT); // CF_UNICODETEXT
+	char *str = GlobalLock(object);
+	char *ret;
+	if (str != NULL)
+	{
+		ret = strdup(str);
+		GlobalUnlock(str);
+	}
+	else
+	{
+		ret = NULL;
+	}
+	CloseClipboard();
+	return ret;
 }
 
 void gfx_win32_set_clipboard(gfx_win32_window_t *window, const char *text)
 {
+	if (!OpenClipboard(window->window))
+		return;
+	HANDLE object = GlobalAlloc(GMEM_MOVEABLE, strlen(text) + 1);
+	if (!object)
+	{
+		CloseClipboard();
+		return;
+	}
+	char *str = GlobalLock(object);
+	if (str)
+	{
+		strcpy(str, text);
+		GlobalUnlock(str);
+	}
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, object); //CF_UNICODETEXT
+	CloseClipboard();
 }
 
 gfx_cursor_t gfx_win32_create_native_cursor(gfx_win32_window_t *window, enum gfx_native_cursor cursor)
@@ -565,36 +640,8 @@ gfx_cursor_t gfx_win32_create_native_cursor(gfx_win32_window_t *window, enum gfx
 
 gfx_cursor_t gfx_win32_create_cursor(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
-	gfx_cursor_t cursor = NULL;
-	char *tmp = NULL;
-	HBITMAP mask;
-	HBITMAP color;
-	ICONINFO iconinfo;
-	tmp = GFX_MALLOC(width * height * 4);
-	if (!tmp)
-		goto end;
-	for (size_t i = 0; i < width * height * 4; i += 4)
-	{
-		((uint8_t*)tmp)[i + 0] = ((uint8_t*)data)[i + 2];
-		((uint8_t*)tmp)[i + 1] = ((uint8_t*)data)[i + 1];
-		((uint8_t*)tmp)[i + 2] = ((uint8_t*)data)[i + 0];
-		((uint8_t*)tmp)[i + 3] = ((uint8_t*)data)[i + 3];
-	}
-	mask = CreateBitmap(width, height, 1, 1, NULL);
-	color = CreateBitmap(width, height, 1, 32, tmp);
-	if (!mask || !color)
-		goto end;
-	iconinfo.fIcon = false;
-	iconinfo.xHotspot = xhot;
-	iconinfo.yHotspot = yhot;
-	iconinfo.hbmMask = mask;
-	iconinfo.hbmColor = color;
-	cursor = CreateIconIndirect(&iconinfo);
-end:
-	DeleteObject(color);
-	DeleteObject(mask);
-	GFX_FREE(tmp);
-	return cursor;
+	(void)window;
+	return build_icon(true, data, width, height, xhot, yhot);
 }
 
 void gfx_win32_delete_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor)
@@ -613,6 +660,7 @@ void gfx_win32_set_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor)
 
 void gfx_win32_set_mouse_position(gfx_win32_window_t *window, int32_t x, int32_t y)
 {
+	(void)window;
 	SetCursorPos(x, y);
 }
 

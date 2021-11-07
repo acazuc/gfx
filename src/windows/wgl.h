@@ -7,7 +7,7 @@ extern "C" {
 
 # include "./gl.h"
 
-gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context);
+gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties);
 
 void *gfx_wgl_get_proc_address(const char *name);
 

@@ -68,6 +68,11 @@ static void wgl_set_title(gfx_window_t *window, const char *title)
 	gfx_win32_set_title(WIN32_WINDOW, title);
 }
 
+static void wgl_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	gfx_win32_set_icon(WIN32_WINDOW, data, width, height);
+}
+
 static void wgl_poll_events(gfx_window_t *window)
 {
 	gfx_win32_poll_events(WIN32_WINDOW);
@@ -123,9 +128,9 @@ static gfx_cursor_t wgl_create_native_cursor(gfx_window_t *window, enum gfx_nati
 	return gfx_win32_create_native_cursor(WIN32_WINDOW, cursor);
 }
 
-static gfx_cursor_t wgl_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+static gfx_cursor_t wgl_create_cursor(gfx_window_t *window, const void *data, uint32_t width, uint32_t height, uint32_t xhot, uint32_t yhot)
 {
-	return gfx_win32_create_cursor(WIN32_WINDOW, data, width, height);
+	return gfx_win32_create_cursor(WIN32_WINDOW, data, width, height, xhot, yhot);
 }
 
 static void wgl_delete_cursor(gfx_window_t *window, gfx_cursor_t cursor)
@@ -148,7 +153,7 @@ static gfx_window_vtable_t wgl_vtable =
 	GFX_WINDOW_VTABLE_DEF(wgl)
 };
 
-gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
+gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_wgl_window_t));
 	if (!window)
@@ -275,16 +280,6 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		{
 			if (gfx_error_callback)
 				gfx_error_callback("wglCreateContext failed: %u", (unsigned)GetLastError());
-			goto err;
-		}
-	}
-	if (shared_context)
-	{
-		if (!wglShareLists(((gfx_wgl_window_t*)shared_context)->context, WGL_WINDOW->context))
-		{
-			wglDeleteContext(WGL_WINDOW->context);
-			if (gfx_error_callback)
-				gfx_error_callback("wglShareLists failed: %u", (unsigned)GetLastError());
 			goto err;
 		}
 	}

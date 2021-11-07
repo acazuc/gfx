@@ -28,6 +28,7 @@ void gfx_win32_dtr(gfx_win32_window_t *window);
 void gfx_win32_show(gfx_win32_window_t *window);
 void gfx_win32_hide(gfx_win32_window_t *window);
 void gfx_win32_set_title(gfx_win32_window_t *window, const char *title);
+void gfx_win32_set_icon(gfx_win32_window_t *window, const void *data, uint32_t width, uint32_t height);
 void gfx_win32_poll_events(gfx_win32_window_t *window);
 void gfx_win32_wait_events(gfx_win32_window_t *window);
 void gfx_win32_resize(gfx_win32_window_t *window, uint32_t width, uint32_t height);

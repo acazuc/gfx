@@ -16,6 +16,7 @@ typedef struct gfx_window_vtable_s
 	void (*make_current)(gfx_window_t *window);
 	void (*set_swap_interval)(gfx_window_t *window, int interval);
 	void (*set_title)(gfx_window_t *window, const char *title);
+	void (*set_icon)(gfx_window_t *window, const void *data, uint32_t width, uint32_t height);
 	void (*resize)(gfx_window_t *window, uint32_t width, uint32_t height);
 	char *(*get_clipboard)(gfx_window_t *window);
 	void (*set_clipboard)(gfx_window_t *window, const char *clipboard);
@@ -40,6 +41,7 @@ typedef struct gfx_window_vtable_s
 	.make_current         = prefix##_make_current, \
 	.set_swap_interval    = prefix##_set_swap_interval, \
 	.set_title            = prefix##_set_title, \
+	.set_icon             = prefix##_set_icon, \
 	.resize               = prefix##_resize, \
 	.get_clipboard        = prefix##_get_clipboard, \
 	.set_clipboard        = prefix##_set_clipboard, \

@@ -87,6 +87,11 @@ static void d3d_set_title(gfx_window_t *window, const char *title)
 	gfx_win32_set_title(WIN32_WINDOW, title);
 }
 
+static void d3d_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	gfx_win32_set_icon(WIN32_WINDOW, data, width, height);
+}
+
 static void d3d_poll_events(gfx_window_t *window)
 {
 	gfx_win32_poll_events(WIN32_WINDOW);
@@ -112,7 +117,7 @@ static void d3d_swap_buffers(gfx_window_t *window)
 
 static void d3d_make_current(gfx_window_t *window)
 {
-	//XXX
+	(void)window;
 }
 
 static void d3d_resize(gfx_window_t *window, uint32_t width, uint32_t height)
@@ -170,7 +175,7 @@ static gfx_window_vtable_t d3d_vtable =
 	GFX_WINDOW_VTABLE_DEF(d3d)
 };
 
-gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
+gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_d3d_window_t));
 	if (!window)

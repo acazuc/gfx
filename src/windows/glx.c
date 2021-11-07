@@ -58,11 +58,6 @@ static void glx_hide(gfx_window_t *window)
 	gfx_x11_hide(X11_WINDOW);
 }
 
-static void glx_set_title(gfx_window_t *window, const char *title)
-{
-	gfx_x11_set_title(X11_WINDOW, title);
-}
-
 static void glx_poll_events(gfx_window_t *window)
 {
 	gfx_x11_poll_events(X11_WINDOW);
@@ -91,6 +86,16 @@ static void glx_swap_buffers(gfx_window_t *window)
 static void glx_make_current(gfx_window_t *window)
 {
 	glXMakeContextCurrent(X11_WINDOW->display, GLX_WINDOW->window, GLX_WINDOW->window, GLX_WINDOW->context);
+}
+
+static void glx_set_title(gfx_window_t *window, const char *title)
+{
+	gfx_x11_set_title(X11_WINDOW, title);
+}
+
+static void glx_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	gfx_x11_set_icon(X11_WINDOW, data, width, height);
 }
 
 static void glx_resize(gfx_window_t *window, uint32_t width, uint32_t height)
@@ -210,7 +215,7 @@ static GLXFBConfig *get_configs(gfx_window_t *window, gfx_window_properties_t *p
 	return configs;
 }
 
-static void create_context(gfx_window_t *window, gfx_window_properties_t *properties, XVisualInfo *vi, GLXFBConfig *configs, gfx_window_t *shared_window)
+static void create_context(gfx_window_t *window, gfx_window_properties_t *properties, XVisualInfo *vi, GLXFBConfig *configs)
 {
 	if (GLX_WINDOW->glXCreateContextAttribsARB)
 	{
@@ -236,15 +241,15 @@ static void create_context(gfx_window_t *window, gfx_window_properties_t *proper
 #endif
 		attributes[attributes_nb++] = None;
 		attributes[attributes_nb++] = None;
-		GLX_WINDOW->context = GLX_WINDOW->glXCreateContextAttribsARB(X11_WINDOW->display, configs[0], shared_window ? ((gfx_glx_window_t*)shared_window)->context : NULL, true, attributes);
+		GLX_WINDOW->context = GLX_WINDOW->glXCreateContextAttribsARB(X11_WINDOW->display, configs[0], NULL, true, attributes);
 	}
 	else
 	{
-		GLX_WINDOW->context = glXCreateContext(X11_WINDOW->display, vi, shared_window ? ((gfx_glx_window_t*)shared_window)->context : NULL, true);
+		GLX_WINDOW->context = glXCreateContext(X11_WINDOW->display, vi, NULL, true);
 	}
 }
 
-gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_window)
+gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	XVisualInfo *vi = NULL;
 	GLXFBConfig *configs = NULL;
@@ -271,7 +276,7 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 		goto err;
 	}
 	GLX_WINDOW->window = glXCreateWindow(X11_WINDOW->display, configs[0], X11_WINDOW->window, NULL);
-	create_context(window, properties, vi, configs, shared_window);
+	create_context(window, properties, vi, configs);
 	XFree(configs);
 	XFree(vi);
 	return window;

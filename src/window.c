@@ -91,7 +91,7 @@ gfx_window_vtable_t gfx_window_vtable =
 	.dtr = dtr,
 };
 
-gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
+gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	switch (properties->window_backend)
 	{
@@ -99,7 +99,7 @@ gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t heig
 #if defined(GFX_ENABLE_WINDOW_X11)
 #if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4)
 			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4)
-				return gfx_glx_window_new(title, width, height, properties, shared_context);
+				return gfx_glx_window_new(title, width, height, properties);
 #endif
 #endif
 			break;
@@ -107,24 +107,28 @@ gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t heig
 #if defined(GFX_ENABLE_WINDOW_WIN32)
 #if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4)
 			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4)
-				return gfx_wgl_window_new(title, width, height, properties, shared_context);
+				return gfx_wgl_window_new(title, width, height, properties);
 #endif
 #if defined(GFX_ENABLE_DEVICE_D3D9) || defined(GFX_ENABLE_DEVICE_D3D11)
 			if (properties->device_backend == GFX_DEVICE_D3D9 || properties->device_backend == GFX_DEVICE_D3D11)
-				return gfx_d3d_window_new(title, width, height, properties, shared_context);
+				return gfx_d3d_window_new(title, width, height, properties);
 #endif
 #endif
 			break;
 		case GFX_WINDOW_WAYLAND:
 #if defined(GFX_ENABLE_WINDOW_WAYLAND)
+#if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4) || defined(GFX_ENABLE_DEVICE_VK)
 			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4 || properties->device_backend == GFX_DEVICE_VK)
-				return gfx_wl_window_new(title, width, height, properties, shared_context);
+				return gfx_wl_window_new(title, width, height, properties);
+#endif
 #endif
 			break;
 		case GFX_WINDOW_GLFW:
 #if defined(GFX_ENABLE_WINDOW_GLFW)
+#if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4) || defined(GFX_ENABLE_DEVICE_VK)
 			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4 || properties->device_backend == GFX_DEVICE_VK)
-				return gfx_glfw_window_new(title, width, height, properties, shared_context);
+				return gfx_glfw_window_new(title, width, height, properties);
+#endif
 #endif
 			break;
 	}
@@ -216,6 +220,13 @@ void gfx_window_set_title(gfx_window_t *window, const char *title)
 {
 	WIN_DEBUG;
 	window->vtable->set_title(window, title);
+	WIN_DEBUG;
+}
+
+void gfx_window_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	WIN_DEBUG;
+	window->vtable->set_icon(window, data, width, height);
 	WIN_DEBUG;
 }
 

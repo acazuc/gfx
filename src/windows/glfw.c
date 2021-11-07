@@ -121,6 +121,15 @@ static void glfw_set_title(gfx_window_t *window, const char *title)
 	glfwSetWindowTitle(GLFW_WINDOW->window, title);
 }
 
+static void glfw_set_icon(gfx_window_t *window, const void *data, uint32_t width, uint32_t height)
+{
+	GLFWimage image;
+	image.width = width;
+	image.height = height;
+	image.pixels = (unsigned char*)data;
+	glfwSetWindowIcon(GLFW_WINDOW->window, 1, &image);
+}
+
 static void glfw_resize(gfx_window_t *window, uint32_t width, uint32_t height)
 {
 	glfwSetWindowSize(GLFW_WINDOW->window, width, height);
@@ -138,6 +147,7 @@ static void glfw_set_clipboard(gfx_window_t *window, const char *text)
 
 static gfx_cursor_t glfw_create_native_cursor(gfx_window_t *window, enum gfx_native_cursor cursor)
 {
+	(void)window;
 	return glfwCreateStandardCursor(cursors[cursor]);
 }
 
@@ -174,7 +184,7 @@ static gfx_window_vtable_t glfw_vtable =
 	GFX_WINDOW_VTABLE_DEF(glfw)
 };
 
-gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties, gfx_window_t *shared_context)
+gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	if (!glfwInit())
 		return NULL;
@@ -222,7 +232,7 @@ gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t he
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
 	window->width = width;
 	window->height = height;
-	GLFW_WINDOW->window = glfwCreateWindow(width, height, title, NULL, shared_context ? ((gfx_glfw_window_t*)shared_context)->window : NULL);
+	GLFW_WINDOW->window = glfwCreateWindow(width, height, title, NULL, NULL);
 	if (!GLFW_WINDOW->window)
 		goto err;
 	glfwSetWindowUserPointer(GLFW_WINDOW->window, window);
