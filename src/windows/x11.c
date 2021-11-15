@@ -387,7 +387,7 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 			enum gfx_key_code key = get_key_code(xkey);
 			if (window->winref->char_callback && key != GFX_KEY_BACKSPACE && key != GFX_KEY_ENTER && key != GFX_KEY_KP_ENTER)
 			{
-				char text[5];
+				char text[5] = {0};
 				Status status;
 				int len = Xutf8LookupString(window->xic, &event->xkey, text, sizeof(text), NULL, &status);
 				if (len > 0 && (status == XLookupChars || status == XLookupBoth))

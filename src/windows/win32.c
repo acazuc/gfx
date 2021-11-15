@@ -456,6 +456,7 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 				tmp[0] = wparam >> 8;
 				tmp[1] = wparam;
 				char *iter = tmp;
+				memset(event.utf8, 0, sizeof(event.utf8));
 				if (utf16_decode((const char**)&iter, &event.codepoint))
 				{
 					iter = event.utf8;
