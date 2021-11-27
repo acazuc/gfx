@@ -20,6 +20,7 @@ typedef struct gfx_win32_window_s
 	bool hidden_cursor;
 	bool mouse_hover;
 	char *classname;
+	void (*on_resize)(gfx_window_t *winref);
 } gfx_win32_window_t;
 
 bool gfx_win32_create_window(gfx_win32_window_t *window, const char *title, uint32_t width, uint32_t height);

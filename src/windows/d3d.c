@@ -30,6 +30,8 @@ typedef struct gfx_d3d_window_s
 #define WIN32_WINDOW (&D3D_WINDOW->win32)
 #define D3D_WINDOW ((gfx_d3d_window_t*)window)
 
+static void d3d_on_resize(gfx_window_t *window);
+
 static bool d3d_ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 {
 	D3D_WINDOW->interval = 1;
@@ -55,6 +57,7 @@ static bool d3d_create_device(gfx_window_t *window)
 		case GFX_DEVICE_D3D9:
 #ifdef GFX_ENABLE_DEVICE_D3D9
 			window->device = gfx_d3d9_device_new(&D3D_WINDOW->window, &D3D_WINDOW->swap_chain_desc, &D3D_WINDOW->swap_chain);
+			d3d_on_resize(window);
 			return true;
 #else
 			break;
@@ -62,6 +65,7 @@ static bool d3d_create_device(gfx_window_t *window)
 		case GFX_DEVICE_D3D11:
 #ifdef GFX_ENABLE_DEVICE_D3D11
 			window->device = gfx_d3d11_device_new(&D3D_WINDOW->window, &D3D_WINDOW->swap_chain_desc, &D3D_WINDOW->swap_chain);
+			d3d_on_resize(window);
 			return true;
 #else
 			break;
@@ -170,6 +174,31 @@ static void d3d_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
 	gfx_win32_set_mouse_position(WIN32_WINDOW, x, y);
 }
 
+static void d3d_on_resize(gfx_window_t *window)
+{
+	switch (window->properties.device_backend)
+	{
+		case GFX_DEVICE_GL3:
+			break;
+		case GFX_DEVICE_GL4:
+			break;
+		case GFX_DEVICE_D3D9:
+#ifdef GFX_ENABLE_DEVICE_D3D9
+			if (window->device)
+				gfx_d3d9_resize(window->device);
+#endif
+			break;
+		case GFX_DEVICE_D3D11:
+#ifdef GFX_ENABLE_DEVICE_D3D11
+			if (window->device)
+				gfx_d3d11_resize(window->device);
+#endif
+			break;
+		case GFX_DEVICE_VK:
+			break;
+	}
+}
+
 static gfx_window_vtable_t d3d_vtable =
 {
 	GFX_WINDOW_VTABLE_DEF(d3d)
@@ -193,6 +222,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 		return NULL;
 	}
 	gfx_win32_ctr(WIN32_WINDOW, window);
+	WIN32_WINDOW->on_resize = d3d_on_resize;
 	if (!gfx_win32_create_window(WIN32_WINDOW, title, width, height))
 	{
 		if (gfx_error_callback)

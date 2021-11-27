@@ -34,6 +34,7 @@ void gfx_win32_ctr(gfx_win32_window_t *window, gfx_window_t *winref)
 	window->cursor = NULL;
 	window->hidden_cursor = false;
 	window->mouse_hover = false;
+	window->on_resize = NULL;
 }
 
 void gfx_win32_dtr(gfx_win32_window_t *window)
@@ -424,6 +425,8 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			{
 				window->winref->width = width;
 				window->winref->height = height;
+				if (window->on_resize)
+					window->on_resize(window->winref);
 				if (window->winref->resize_callback)
 				{
 					gfx_resize_event_t event;
