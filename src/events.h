@@ -1,8 +1,12 @@
 #ifndef GFX_EVENTS_H
-# define GFX_EVENTS_H
+#define GFX_EVENTS_H
 
-# include <stdbool.h>
-# include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdbool.h>
+#include <stdint.h>
 
 enum gfx_key_code
 {
@@ -207,5 +211,9 @@ typedef struct gfx_move_event_s
 	int32_t x;
 	int32_t y;
 } gfx_move_event_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

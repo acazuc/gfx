@@ -1,6 +1,7 @@
 #include "window.h"
-#include "./window_vtable.h"
-#include "./device.h"
+#include "window_vtable.h"
+#include "device.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,9 +30,9 @@
 
 #if 0
 # include <stdio.h>
-#define WIN_DEBUG printf("%s@%s:%d\n", __func__, __FILE__, __LINE__)
+# define WIN_DEBUG printf("%s@%s:%d\n", __func__, __FILE__, __LINE__)
 #else
-#define WIN_DEBUG
+# define WIN_DEBUG
 #endif
 
 gfx_memory_t gfx_memory = {NULL};
@@ -323,4 +324,3 @@ void gfx_window_properties_init(gfx_window_properties_t *properties)
 	properties->double_buffer = 1;
 	properties->stereo = 0;
 }
-

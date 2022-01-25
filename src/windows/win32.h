@@ -1,12 +1,8 @@
 #ifndef GFX_WIN32_WINDOW_H
-# define GFX_WIN32_WINDOW_H
+#define GFX_WIN32_WINDOW_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
-# include "../window.h"
-# include <windows.h>
+#include "../window.h"
+#include <windows.h>
 
 typedef struct gfx_win32_window_s
 {
@@ -42,9 +38,5 @@ gfx_cursor_t gfx_win32_create_cursor(gfx_win32_window_t *window, const void *dat
 void gfx_win32_delete_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor);
 void gfx_win32_set_cursor(gfx_win32_window_t *window, gfx_cursor_t cursor);
 void gfx_win32_set_mouse_position(gfx_win32_window_t *window, int32_t x, int32_t y);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

@@ -1,5 +1,5 @@
 #ifndef GFX_WINDOW_VTABLE_H
-# define GFX_WINDOW_VTABLE_H
+#define GFX_WINDOW_VTABLE_H
 
 typedef struct gfx_window_vtable_s
 {

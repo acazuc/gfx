@@ -1,14 +1,14 @@
 #ifndef GFX_DEVICE_H
-# define GFX_DEVICE_H
+#define GFX_DEVICE_H
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
-# endif
+#endif
 
-# include "./objects.h"
-# include <jks/math/vec4.h>
-# include <jks/math/vec2.h>
-# include <stddef.h>
+#include "objects.h"
+#include <jks/math/vec4.h>
+#include <jks/math/vec2.h>
+#include <stddef.h>
 
 typedef struct gfx_device_vtable_s gfx_device_vtable_t;
 typedef struct gfx_device_s gfx_device_t;
@@ -90,8 +90,8 @@ void gfx_set_scissor(gfx_device_t *device, int32_t x, int32_t y, uint32_t width,
 void gfx_set_line_width(gfx_device_t *device, float line_width);
 void gfx_set_point_size(gfx_device_t *device, float point_size);
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 #endif

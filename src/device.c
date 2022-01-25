@@ -1,13 +1,14 @@
 #include "device.h"
 #include "device_vtable.h"
 #include "window.h"
+#include "config.h"
 #include <stdlib.h>
 
 #if 0
 # include <stdio.h>
-#define DEV_DEBUG printf("%s@%s:%d\n", __func__, __FILE__, __LINE__)
+# define DEV_DEBUG printf("%s@%s:%d\n", __func__, __FILE__, __LINE__)
 #else
-#define DEV_DEBUG
+# define DEV_DEBUG
 #endif
 
 void gfx_device_delete(gfx_device_t *device)

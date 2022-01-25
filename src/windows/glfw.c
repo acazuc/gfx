@@ -1,5 +1,6 @@
 #include "glfw.h"
 #include "../window_vtable.h"
+#include "config.h"
 #include <GLFW/glfw3.h>
 #include <jks/utf8.h>
 #include <stdlib.h>

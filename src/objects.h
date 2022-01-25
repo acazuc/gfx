@@ -1,8 +1,12 @@
 #ifndef GFX_OBJECTS_H
-# define GFX_OBJECTS_H
+#define GFX_OBJECTS_H
 
-# include <stdbool.h>
-# include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef struct gfx_device_s gfx_device_t;
 
@@ -419,5 +423,9 @@ typedef struct gfx_pipeline_state_s
 } gfx_pipeline_state_t;
 
 #define GFX_PIPELINE_STATE_INIT() (gfx_pipeline_state_t){.handle = GFX_HANDLE_INIT}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

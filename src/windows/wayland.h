@@ -1,11 +1,7 @@
 #ifndef GFX_WAYLAND_WINDOW_H
-# define GFX_WAYLAND_WINDOW_H
+#define GFX_WAYLAND_WINDOW_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
-# include "./window.h"
+#include "window.h"
 
 typedef struct gfx_wayland_window_s
 {
@@ -13,9 +9,5 @@ typedef struct gfx_wayland_window_s
 } gfx_wayland_window_t;
 
 gfx_window_t *gfx_wayland_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

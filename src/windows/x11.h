@@ -1,9 +1,5 @@
 #ifndef GFX_X11_WINDOW_H
-# define GFX_X11_WINDOW_H
-
-# ifdef __cplusplus
-extern "C" {
-# endif
+#define GFX_X11_WINDOW_H
 
 #include "../window.h"
 #include <X11/extensions/XInput2.h>
@@ -66,9 +62,5 @@ gfx_cursor_t gfx_x11_create_cursor(gfx_x11_window_t *window, const void *data, u
 void gfx_x11_delete_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
 void gfx_x11_set_cursor(gfx_x11_window_t *window, gfx_cursor_t cursor);
 void gfx_x11_set_mouse_position(gfx_x11_window_t *window, int32_t x, int32_t y);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif

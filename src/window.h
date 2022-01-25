@@ -1,13 +1,13 @@
 #ifndef GFX_WINDOW_H
-# define GFX_WINDOW_H
+#define GFX_WINDOW_H
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
-# endif
+#endif
 
-# include "./events.h"
-# include <stdint.h>
-# include <stddef.h>
+#include "./events.h"
+#include <stdint.h>
+#include <stddef.h>
 
 typedef struct gfx_device_s gfx_device_t;
 typedef struct gfx_window_s gfx_window_t;
@@ -160,8 +160,8 @@ bool gfx_is_key_down(gfx_window_t *window, enum gfx_key_code key);
 
 void gfx_window_properties_init(gfx_window_properties_t *properties);
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 #endif

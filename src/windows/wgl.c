@@ -1,6 +1,7 @@
 #include "wgl.h"
 #include "../window_vtable.h"
-#include "./win32.h"
+#include "config.h"
+#include "win32.h"
 #include <windows.h>
 #include <string.h>
 #include <GL/gl.h>

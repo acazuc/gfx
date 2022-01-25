@@ -1,5 +1,5 @@
 #ifndef GFX_DEVICE_VTABLE_H
-# define GFX_DEVICE_VTABLE_H
+#define GFX_DEVICE_VTABLE_H
 
 typedef struct gfx_device_vtable_s
 {

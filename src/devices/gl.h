@@ -1,15 +1,15 @@
 #ifndef GFX_GL_DEVICE_H
-# define GFX_GL_DEVICE_H
+#define GFX_GL_DEVICE_H
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
-# endif
+#endif
 
-# include "../device.h"
-# include <GL/glcorearb.h>
-# include <jks/array.h>
-# include <pthread.h>
-# include <limits.h>
+#include "../device.h"
+#include <GL/glcorearb.h>
+#include <jks/array.h>
+#include <pthread.h>
+#include <limits.h>
 
 typedef void *(gfx_gl_load_addr_t)(const char *name);
 
@@ -147,8 +147,8 @@ void gfx_gl_errors(uint32_t err, const char *fn, const char *file, int line);
 void gfx_gl_enable(gfx_device_t *device, uint32_t value);
 void gfx_gl_disable(gfx_device_t *device, uint32_t value);
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 #endif
