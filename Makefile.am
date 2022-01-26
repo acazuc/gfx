@@ -57,5 +57,8 @@ libgfx_la_SOURCES = src/device.c src/window.c \
                     $(GLW_SRC)
 libgfx_la_LDFLAGS = -ljks $(GLFW_LD)
 
+pkgincludedir = $(includedir)/gfx
+pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h
+
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = -I m4

@@ -1,7 +1,7 @@
 #include "window.h"
 #include "window_vtable.h"
-#include "device.h"
 #include "config.h"
+#include "device.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -37,6 +37,61 @@
 
 gfx_memory_t gfx_memory = {NULL};
 gfx_error_callback_t gfx_error_callback = NULL;
+
+bool gfx_has_window_backend(enum gfx_window_backend backend)
+{
+#if defined(GFX_ENABLE_WINDOW_X11)
+	if (backend == GFX_WINDOW_X11)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_WINDOW_WAYLAND)
+	if (backend == GFX_WINDOW_WAYLAND)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_WINDOW_WIN32)
+	if (backend == GFX_WINDOW_WIN32)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_WINDOW_GLFW)
+	if (backend == GFX_WINDOW_GLFW)
+		return true;
+#endif
+
+	return false;
+}
+
+bool gfx_has_device_backend(enum gfx_device_backend backend)
+{
+#if defined(GFX_ENABLE_DEVICE_GL3)
+	if (backend == GFX_DEVICE_GL3)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_DEVICE_GL4)
+	if (backend == GFX_DEVICE_GL4)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_DEVICE_D3D9)
+	if (backend == GFX_DEVICE_D3D9)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_DEVICE_D3D11)
+	if (backend == GFX_DEVICE_D3D11)
+		return true;
+#endif
+
+#if defined(GFX_ENABLE_DEVICE_VK)
+	if (backend == GFX_DEVICE_VK)
+		return true;
+#endif
+
+	return false;
+}
 
 static bool ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 {

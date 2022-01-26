@@ -86,7 +86,7 @@ AC_ARG_ENABLE(window-x11,
 )
 if test "x$window_x11" != "xfalse"
 then
-  AC_DEFINE([GFX_ENABLE_WINDOW_GLX], [1], [Define to enable X11 window backend])
+  AC_DEFINE([GFX_ENABLE_WINDOW_X11], [1], [Define to enable X11 window backend])
 fi
 AM_CONDITIONAL(WINDOW_X11, test "x$window_x11" = "xtrue")
 
@@ -134,7 +134,7 @@ AC_ARG_WITH([jks],
 		[],
 	[with_readline=yes])
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 
 AC_PROG_CC
 AM_PROG_AR

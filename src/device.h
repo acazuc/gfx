@@ -6,8 +6,8 @@ extern "C" {
 #endif
 
 #include "objects.h"
-#include <jks/math/vec4.h>
-#include <jks/math/vec2.h>
+#include <jks/vec4.h>
+#include <jks/vec2.h>
 #include <stddef.h>
 
 typedef struct gfx_device_vtable_s gfx_device_vtable_t;

@@ -1,7 +1,7 @@
 #include "device.h"
 #include "device_vtable.h"
-#include "window.h"
 #include "config.h"
+#include "window.h"
 #include <stdlib.h>
 
 #if 0

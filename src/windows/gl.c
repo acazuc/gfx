@@ -1,5 +1,5 @@
 #include "gl.h"
-#include "config.h"
+#include "../config.h"
 
 #ifdef GFX_ENABLE_DEVICE_GL3
 # include "../devices/gl3.h"

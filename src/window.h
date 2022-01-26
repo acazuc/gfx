@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "./events.h"
+#include "events.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -131,6 +131,9 @@ struct gfx_window_s
 	bool close_requested;
 	bool grabbed;
 };
+
+bool gfx_has_window_backend(enum gfx_window_backend backend);
+bool gfx_has_device_backend(enum gfx_device_backend backend);
 
 gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties);
 void gfx_delete_window(gfx_window_t *window);

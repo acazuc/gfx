@@ -4,7 +4,7 @@
 #define INITGUID
 #include "d3d.h"
 #include "../window_vtable.h"
-#include "config.h"
+#include "../config.h"
 #include "win32.h"
 
 #ifdef GFX_ENABLE_DEVICE_D3D9

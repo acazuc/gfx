@@ -1,6 +1,6 @@
 #include "glx.h"
 #include "../window_vtable.h"
-#include "config.h"
+#include "../config.h"
 #include "x11.h"
 #include <GL/glx.h>
 #include <string.h>
