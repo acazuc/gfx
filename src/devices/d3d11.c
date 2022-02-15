@@ -824,7 +824,7 @@ static bool d3d11_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum
 		default:
 			return false;
 	}
-	if (D3DCompile(data, len, NULL, NULL, NULL, "main", type_str, D3D10_SHADER_ENABLE_STRICTNESS, 0, &shader_data, &error_message) != S_OK)
+	if (D3DCompile(data, len, NULL, NULL, NULL, "main", type_str, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR | D3DCOMPILE_SKIP_VALIDATION | D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &shader_data, &error_message) != S_OK)
 	{
 		if (error_message)
 		{

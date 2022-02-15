@@ -125,8 +125,8 @@ AM_CONDITIONAL(DEVICE_GL, test "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(DEVICE_D3D, test "x$device_d3d9$device_d3d11" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_GL, test "x$window_glfw$window_x11$window_win32" != "xfalsefalsefalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_GLX, test "x$window_x11" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
-AM_CONDITIONAL(WINDOW_WGL, test "x$window_win32" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalse")
-AM_CONDITIONAL(WINDOW_D3D, test "x$window_win32" != "xfalse" -a "x$device_d3d9$device_d3d11" != "xfalse")
+AM_CONDITIONAL(WINDOW_WGL, test "x$window_win32" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
+AM_CONDITIONAL(WINDOW_D3D, test "x$window_win32" != "xfalse" -a "x$device_d3d9$device_d3d11" != "xfalsefalse")
 
 AC_ARG_WITH([jks],
 	[AS_HELP_STRING([--without-jks],
