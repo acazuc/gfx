@@ -79,10 +79,10 @@ void gfx_x11_dtr(gfx_x11_window_t *window)
 		XDestroyIC(window->xic);
 	if (window->xim)
 		XCloseIM(window->xim);
-	if (window->display)
-		XCloseDisplay(window->display);
 	if (window->blank_cursor)
 		XFreeCursor(window->display, window->blank_cursor);
+	if (window->display)
+		XCloseDisplay(window->display);
 	free(window->clipboard);
 }
 
