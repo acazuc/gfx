@@ -30,10 +30,12 @@ endif
 
 if WINDOW_X11
 WIN_X11_SRC = src/windows/x11.c
+WIN_X11_LD = -lX11 -lXi -lXcursor
 endif
 
 if WINDOW_GL
 WIN_GL_SRC = src/windows/gl.c
+WIN_GL_LD = -lGL
 endif
 
 if WINDOW_WIN32
@@ -59,7 +61,8 @@ libgfx_la_SOURCES = src/device.c src/window.c \
                     $(WIN_GLX_SRC) $(WIN_X11_SRC) $(WIN_GLFW_SRC) \
                     $(WIN_WGL_SRC) $(WIN_WIN32_SRC) $(WIN_D3D_SRC) \
                     $(WIN_GL_SRC)
-libgfx_la_LDFLAGS = -ljks $(GLFW_LD)
+
+libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD)
 
 pkgincludedir = $(includedir)/gfx
 pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h
