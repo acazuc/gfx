@@ -8,127 +8,177 @@
 typedef struct gfx_vk_device_s
 {
 	gfx_device_t device;
+	VkPhysicalDevice physical_device;
 	VkCommandBuffer command_buffer;
 	VkCommandPool command_pool;
-	VkSurfaceKHR vk_surface;
-	VkInstance vk_instance;
+	VkSurfaceKHR surface;
+	VkInstance instance;
 	VkDevice vk_device;
+	uint32_t graphics_queue;
 } gfx_vk_device_t;
+
+static bool get_physical_device(gfx_device_t *device)
+{
+	VkResult result;
+	uint32_t device_count = 0;
+	result = vkEnumeratePhysicalDevices(VK_DEVICE->instance, &device_count, NULL);
+	if (result != VK_SUCCESS)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't enumerate physical devices");
+		return false;
+	}
+	if (device_count == 0)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't enumerate physical devices");
+		return false;
+	}
+	VkPhysicalDevice *devices = GFX_MALLOC(sizeof(*devices) * device_count);
+	if (devices == NULL)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't allocate physical devices");
+		return false;
+	}
+	result = vkEnumeratePhysicalDevices(VK_DEVICE->instance, &device_count, devices);
+	if (result != VK_SUCCESS)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't enumerate physical devices");
+		GFX_FREE(devices);
+		return false;
+	}
+	for (uint32_t i = 0; i < device_count; ++i)
+	{
+		VkPhysicalDeviceProperties device_properties;
+		vkGetPhysicalDeviceProperties(devices[i], &device_properties);
+		if (device_properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			continue;
+		VK_DEVICE->physical_device = devices[i];
+		GFX_FREE(devices);
+		return true;
+	}
+	if (gfx_error_callback)
+		gfx_error_callback("can't find suitable physical device");
+	return false;
+}
+
+static bool get_queues(gfx_device_t *device)
+{
+	uint32_t queue_family_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(VK_DEVICE->physical_device, &queue_family_count, NULL);
+	VkQueueFamilyProperties *queue_families = GFX_MALLOC(sizeof(*queue_families) * queue_family_count);
+	if (!queue_families)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't allocate queue families");
+		return false;
+	}
+	bool graphics_found = false;
+	for (uint32_t i = 0; i < queue_family_count; ++i)
+	{
+		if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			VK_DEVICE->graphics_queue = i;
+			graphics_found = true;
+		}
+	}
+	GFX_FREE(queue_families);
+	return graphics_found;
+}
+
+static bool create_device(gfx_device_t *device)
+{
+	static const char *extensions[] =
+	{
+		"VK_KHR_swapchain",
+	};
+	float queue_priority = 1;
+	VkDeviceQueueCreateInfo queue_create_info;
+	queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queue_create_info.pNext = NULL;
+	queue_create_info.flags = 0;
+	queue_create_info.queueFamilyIndex = VK_DEVICE->graphics_queue;
+	queue_create_info.queueCount = 1;
+	queue_create_info.pQueuePriorities = &queue_priority;
+	VkDeviceCreateInfo create_info;
+	create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
+	create_info.queueCreateInfoCount = 1;
+	create_info.pQueueCreateInfos = &queue_create_info;
+	create_info.enabledLayerCount = 0;
+	create_info.ppEnabledLayerNames = NULL;
+	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
+	create_info.ppEnabledExtensionNames = extensions;
+	create_info.pEnabledFeatures = NULL;
+	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, NULL, &VK_DEVICE->vk_device);
+	if (result != VK_SUCCESS)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't create device");
+		return false;
+	}
+	return true;
+}
+
+static bool create_command_pool(gfx_device_t *device)
+{
+	VkCommandPoolCreateInfo create_info;
+	create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	create_info.queueFamilyIndex = 0;
+	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->command_pool);
+	if (result != VK_SUCCESS)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't create vulkan command pool");
+		return false;
+	}
+	return true;
+}
+
+static bool create_command_buffers(gfx_device_t *device)
+{
+	VkCommandBufferAllocateInfo allocate_info;
+	allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocate_info.pNext = NULL;
+	allocate_info.commandPool = VK_DEVICE->command_pool;
+	allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocate_info.commandBufferCount = 1;
+	VkResult result = vkAllocateCommandBuffers(VK_DEVICE->vk_device, &allocate_info, &VK_DEVICE->command_buffer);
+	if (result != VK_SUCCESS)
+	{
+		if (gfx_error_callback)
+			gfx_error_callback("can't create vulkan command buffer");
+		return false;
+	}
+	return true;
+}
 
 static bool vk_ctr(gfx_device_t *device, gfx_window_t *window)
 {
 	VkResult result;
 	if (!gfx_device_vtable.ctr(device, window))
 		return false;
-	VkPhysicalDevice physical_device = VK_NULL_HANDLE;
-	{
-		uint32_t device_count = 0;
-		result = vkEnumeratePhysicalDevices(VK_DEVICE->vk_instance, &device_count, NULL);
-		if (result != VK_SUCCESS)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't enumerate physical devices");
-			return false;
-		}
-		if (device_count == 0)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't enumerate physical devices");
-			return false;
-		}
-		VkPhysicalDevice *devices = GFX_MALLOC(sizeof(*devices) * device_count);
-		if (devices == NULL)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't allocate physical devices");
-			return false;
-		}
-		result = vkEnumeratePhysicalDevices(VK_DEVICE->vk_instance, &device_count, devices);
-		if (result != VK_SUCCESS)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't enumerate physical devices");
-			GFX_FREE(devices);
-			return false;
-		}
-		for (uint32_t i = 0; i < device_count; ++i)
-		{
-			VkPhysicalDeviceProperties device_properties;
-			vkGetPhysicalDeviceProperties(devices[i], &device_properties);
-			if (device_properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-				continue;
-			physical_device = devices[i];
-			break;
-		}
-		GFX_FREE(devices);
-		if (physical_device == VK_NULL_HANDLE)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't find suitable physical device");
-			return false;
-		}
-	}
-	{
-		static const char *extensions[] =
-		{
-			"VK_KHR_swapchain",
-		};
-		float queue_priority = 1;
-		VkDeviceQueueCreateInfo queue_create_info;
-		queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queue_create_info.pNext = NULL;
-		queue_create_info.flags = 0;
-		queue_create_info.queueFamilyIndex = ;
-		queue_create_info.queueCount = 1;
-		queue_create_info.pQueuePriorities = &queue_priority;
-		VkDeviceCreateInfo create_info;
-		create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		create_info.pNext = NULL;
-		create_info.flags = 0;
-		create_info.queueCreateInfoCount = 1;
-		create_info.pQueueCreateInfos = &queue_create_info;
-		create_info.enabledLayerCount = 0;
-		create_info.ppEnabledLayerNames = NULL;
-		create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
-		create_info.ppEnabledExtensionNames = extensions;
-		create_info.pEnabledFeatures = NULL;
-		result = vkCreateDevice(physical_device, &create_info, NULL, &VK_DEVICE->vk_device);
-		if (result != VK_SUCCESS)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't create device");
-			return false;
-		}
-	}
-	{
-		VkCommandPoolCreateInfo create_info;
-		create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		create_info.pNext = NULL;
-		create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		create_info.queueFamilyIndex = 0;
-		result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->command_pool);
-		if (result != VK_SUCCESS)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't create vulkan command pool");
-			return false;
-		}
-	}
-	{
-		VkCommandBufferAllocateInfo allocate_info;
-		allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocate_info.pNext = NULL;
-		allocate_info.commandPool = VK_DEVICE->command_pool;
-		allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocate_info.commandBufferCount = 1;
-		result = vkAllocateCommandBuffers(VK_DEVICE->vk_device, &allocate_info, &VK_DEVICE->command_buffer);
-		if (result != VK_SUCCESS)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("can't create vulkan command buffer");
-			return false;
-		}
-	}
+	printf("getting physical device\n");
+	if (!get_physical_device(device))
+		return false;
+	printf("getting queues\n");
+	if (!get_queues(device))
+		return false;
+	printf("creating device\n");
+	if (!create_device(device))
+		return false;
+	printf("creating command pool\n");
+	if (!create_command_pool(device))
+		return false;
+	printf("creating command buffers\n");
+	if (!create_command_buffers(device))
+		return false;
+	printf("end\n");
 	return true;
 }
 
@@ -136,8 +186,8 @@ static void vk_dtr(gfx_device_t *device)
 {
 	vkFreeCommandBuffers(VK_DEVICE->vk_device, VK_DEVICE->command_pool, 1, &VK_DEVICE->command_buffer);
 	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, NULL);
-	vkDestroySurfaceKHR(VK_DEVICE->vk_instance, VK_DEVICE->vk_surface, NULL);
-	vkDestroyInstance(VK_DEVICE->vk_instance, NULL);
+	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, NULL);
+	vkDestroyInstance(VK_DEVICE->instance, NULL);
 	vkDestroyDevice(VK_DEVICE->vk_device, NULL);
 	gfx_device_vtable.dtr(device);
 }
@@ -445,8 +495,8 @@ gfx_device_t *gfx_vk_device_new(gfx_window_t *window, VkInstance instance, VkSur
 		return NULL;
 	gfx_device_t *dev = &device->device;
 	dev->vtable = &vk_vtable;
-	device->vk_instance = instance;
-	device->vk_surface = surface;
+	device->instance = instance;
+	device->surface = surface;
 	if (!dev->vtable->ctr(dev, window))
 	{
 		dev->vtable->dtr(dev);
