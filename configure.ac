@@ -73,6 +73,24 @@ fi
 AM_CONDITIONAL(DEVICE_D3D11, test "x$device_d3d11" = "xtrue")
 
 ############
+# Vulkan
+############
+AC_ARG_ENABLE(device-vk,
+	[  --enable-device-vk     Turn on Vulkan device backend],
+	[case "${enableval}" in
+		yes) device_vk=true ;;
+		no)  device_vk=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-device-vk) ;;
+	esac],
+	[device_vk=false]
+)
+if test "x$device_vk" != "xfalse"
+then
+  AC_DEFINE([GFX_ENABLE_DEVICE_VK], [1], [Define to enable Vulkan device backend])
+fi
+AM_CONDITIONAL(DEVICE_VK, test "x$device_vk" = "xtrue")
+
+############
 # Windows
 ############
 AC_ARG_ENABLE(window-x11,
@@ -127,6 +145,7 @@ AM_CONDITIONAL(WINDOW_GL, test "x$window_glfw$window_x11$window_win32" != "xfals
 AM_CONDITIONAL(WINDOW_GLX, test "x$window_x11" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_WGL, test "x$window_win32" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_D3D, test "x$window_win32" != "xfalse" -a "x$device_d3d9$device_d3d11" != "xfalsefalse")
+AM_CONDITIONAL(WINDOW_VK_X11, test "x$window_x11" != "xfalse" -a "x$device_vk" != "xfalse")
 
 AC_ARG_WITH([jks],
 	[AS_HELP_STRING([--without-jks],

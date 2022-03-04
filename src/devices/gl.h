@@ -1,10 +1,6 @@
 #ifndef GFX_GL_DEVICE_H
 #define GFX_GL_DEVICE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "../device.h"
 #include <GL/glcorearb.h>
 #include <jks/array.h>
@@ -146,9 +142,5 @@ extern const bool gfx_gl_attribute_float[34];
 void gfx_gl_errors(uint32_t err, const char *fn, const char *file, int line);
 void gfx_gl_enable(gfx_device_t *device, uint32_t value);
 void gfx_gl_disable(gfx_device_t *device, uint32_t value);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

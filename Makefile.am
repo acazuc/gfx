@@ -12,6 +12,10 @@ if DEVICE_GL4
 DEV_GL4_SRC = src/devices/gl4.c
 endif
 
+if DEVICE_VK
+DEV_VK_SRC = src/devices/vk.c
+endif
+
 if DEVICE_D3D
 DEV_D3D_SRC = src/devices/d3d.c
 endif
@@ -55,14 +59,19 @@ WIN_GLFW_SRC = src/windows/glfw.c
 WIN_GLFW_LD = -lglfw
 endif
 
+if WINDOW_VK_X11
+WIN_VK_X11_SRC = src/windows/vk_x11.c
+WIN_VK_X11_LD = -lvulkan
+endif
+
 libgfx_la_SOURCES = src/device.c src/window.c \
                     $(DEV_GL_SRC) $(DEV_GL3_SRC) $(DEV_GL4_SRC) \
                     $(DEV_D3D_SRC) $(DEV_D3D9_SRC) $(DEV_D3D11_SRC) \
-                    $(WIN_GLX_SRC) $(WIN_X11_SRC) $(WIN_GLFW_SRC) \
-                    $(WIN_WGL_SRC) $(WIN_WIN32_SRC) $(WIN_D3D_SRC) \
-                    $(WIN_GL_SRC)
+                    $(DEV_VK_SRC) $(WIN_GLX_SRC) $(WIN_X11_SRC) \
+                    $(WIN_GLFW_SRC) $(WIN_WGL_SRC) $(WIN_WIN32_SRC) \
+                    $(WIN_D3D_SRC) $(WIN_GL_SRC) $(WIN_VK_X11_SRC)
 
-libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD)
+libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) $(WIN_VK_X11_LD)
 
 pkgincludedir = $(includedir)/gfx
 pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h
