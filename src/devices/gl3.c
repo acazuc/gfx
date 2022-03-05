@@ -789,13 +789,13 @@ static void gl3_set_texture_filtering(gfx_device_t *device, gfx_texture_t *textu
 		texture->min_filtering = min_filtering;
 		texture->mip_filtering = mip_filtering;
 		gl_bind_texture(device, texture);
-		GL3_CALL(TexParameteri, gfx_gl_texture_types[texture->type], GL_TEXTURE_MIN_FILTER, gfx_gl_min_filterings[texture->mip_filtering * 3 + texture->min_filtering]);
+		GL3_CALL(TexParameteri, gfx_gl_texture_types[texture->type], GL_TEXTURE_MIN_FILTER, gfx_gl_min_filterings[mip_filtering * 3 + min_filtering]);
 	}
 	if (texture->mag_filtering != mag_filtering)
 	{
 		texture->mag_filtering = mag_filtering;
 		gl_bind_texture(device, texture);
-		GL3_CALL(TexParameteri, gfx_gl_texture_types[texture->type], GL_TEXTURE_MAG_FILTER, gfx_gl_filterings[mag_filtering]);
+		GL3_CALL(TexParameteri, gfx_gl_texture_types[texture->type], GL_TEXTURE_MAG_FILTER, gfx_gl_mag_filterings[mag_filtering]);
 	}
 }
 

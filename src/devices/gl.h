@@ -126,7 +126,7 @@ extern const GLenum gfx_gl_shader_types[3];
 extern const GLenum gfx_gl_buffer_types[3];
 extern const GLenum gfx_gl_texture_types[5];
 extern const GLenum gfx_gl_texture_addressings[5];
-extern const GLenum gfx_gl_filterings[3];
+extern const GLenum gfx_gl_mag_filterings[3];
 extern const GLenum gfx_gl_min_filterings[9];
 extern const GLenum gfx_gl_buffer_usages[4];
 extern const GLenum gfx_gl_render_target_attachments[6];
