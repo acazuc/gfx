@@ -2,20 +2,144 @@
 #include "../device_vtable.h"
 #include "../window.h"
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <assert.h>
+#include <errno.h>
 
 #define VK_DEVICE ((gfx_vk_device_t*)device)
 
 typedef struct gfx_vk_device_s
 {
 	gfx_device_t device;
+	VkSurfaceCapabilitiesKHR surface_capabilities;
+	VkSurfaceFormatKHR *surface_formats;
+	uint32_t surface_formats_count;
+	VkPresentModeKHR *present_modes;
+	uint32_t present_modes_count;
+	VkImageView *surface_image_views;
+	uint32_t surface_image_views_count;
+	VkImage *surface_images;
+	uint32_t surface_images_count;
+	VkFormat swap_chain_format;
 	VkPhysicalDevice physical_device;
 	VkCommandBuffer command_buffer;
+	VkSwapchainKHR swap_chain;
 	VkCommandPool command_pool;
 	VkSurfaceKHR surface;
 	VkInstance instance;
 	VkDevice vk_device;
-	uint32_t graphics_queue;
+	VkQueue graphics_queue;
+	VkQueue present_queue;
+	uint32_t graphics_family;
+	uint32_t present_family;
+	VkPresentModeKHR present_mode;
 } gfx_vk_device_t;
+
+static const char *vk_err2str(VkResult result)
+{
+#define TEST_ERR(code) \
+	case code: \
+		return #code; \
+
+	switch (result)
+	{
+		TEST_ERR(VK_SUCCESS)
+		TEST_ERR(VK_NOT_READY)
+		TEST_ERR(VK_TIMEOUT)
+		TEST_ERR(VK_EVENT_SET)
+		TEST_ERR(VK_EVENT_RESET)
+		TEST_ERR(VK_INCOMPLETE)
+		TEST_ERR(VK_ERROR_OUT_OF_HOST_MEMORY)
+		TEST_ERR(VK_ERROR_OUT_OF_DEVICE_MEMORY)
+		TEST_ERR(VK_ERROR_INITIALIZATION_FAILED)
+		TEST_ERR(VK_ERROR_DEVICE_LOST)
+		TEST_ERR(VK_ERROR_MEMORY_MAP_FAILED)
+		TEST_ERR(VK_ERROR_LAYER_NOT_PRESENT)
+		TEST_ERR(VK_ERROR_EXTENSION_NOT_PRESENT)
+		TEST_ERR(VK_ERROR_FEATURE_NOT_PRESENT)
+		TEST_ERR(VK_ERROR_INCOMPATIBLE_DRIVER)
+		TEST_ERR(VK_ERROR_TOO_MANY_OBJECTS)
+		TEST_ERR(VK_ERROR_FORMAT_NOT_SUPPORTED)
+		TEST_ERR(VK_ERROR_FRAGMENTED_POOL)
+		TEST_ERR(VK_ERROR_UNKNOWN)
+		TEST_ERR(VK_ERROR_OUT_OF_POOL_MEMORY)
+		TEST_ERR(VK_ERROR_INVALID_EXTERNAL_HANDLE)
+		TEST_ERR(VK_ERROR_FRAGMENTATION)
+		TEST_ERR(VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS)
+		TEST_ERR(VK_ERROR_SURFACE_LOST_KHR)
+		TEST_ERR(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR)
+		TEST_ERR(VK_SUBOPTIMAL_KHR)
+		TEST_ERR(VK_ERROR_OUT_OF_DATE_KHR)
+		TEST_ERR(VK_ERROR_INCOMPATIBLE_DISPLAY_KHR)
+		TEST_ERR(VK_ERROR_VALIDATION_FAILED_EXT)
+		TEST_ERR(VK_ERROR_INVALID_SHADER_NV)
+		TEST_ERR(VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT)
+		TEST_ERR(VK_ERROR_NOT_PERMITTED_EXT)
+		TEST_ERR(VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT)
+		TEST_ERR(VK_THREAD_IDLE_KHR)
+		TEST_ERR(VK_THREAD_DONE_KHR)
+		TEST_ERR(VK_OPERATION_DEFERRED_KHR)
+		TEST_ERR(VK_OPERATION_NOT_DEFERRED_KHR)
+		TEST_ERR(VK_PIPELINE_COMPILE_REQUIRED_EXT)
+	}
+
+	return "Unknown error";
+#undef TEST_ERR
+}
+
+static bool get_queues_id(gfx_device_t *device, VkPhysicalDevice physical_device)
+{
+	uint32_t queue_family_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, NULL);
+	VkQueueFamilyProperties *queue_families = GFX_MALLOC(sizeof(*queue_families) * queue_family_count);
+	if (!queue_families)
+	{
+		GFX_ERROR_CALLBACK("can't allocate queue families: %s (%d)", strerror(errno), errno);
+		return false;
+	}
+	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families);
+	bool graphics_found = false;
+	bool present_found = false;
+	for (uint32_t i = 0; i < queue_family_count; ++i)
+	{
+		if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			VK_DEVICE->graphics_family = i;
+			graphics_found = true;
+		}
+		VkBool32 surface_support = 0;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, VK_DEVICE->surface, &surface_support);
+		if (surface_support)
+		{
+			VK_DEVICE->present_family = i;
+			present_found = true;
+		}
+	}
+	GFX_FREE(queue_families);
+	return graphics_found && present_found;
+}
+
+static bool support_extensions(VkPhysicalDevice physical_device)
+{
+	uint32_t extensions_count;
+	vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_count, NULL);
+	VkExtensionProperties *extensions = GFX_MALLOC(sizeof(*extensions) * extensions_count);
+	if (!extensions)
+	{
+		GFX_ERROR_CALLBACK("device extensions allocation failed: %s (%d)", strerror(errno), errno);
+		return false;
+	}
+	vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_count, extensions);
+	bool support_swapchain = false;
+	for (uint32_t i = 0; i < extensions_count; ++i)
+	{
+		if (!strcmp(extensions[i].extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+			support_swapchain = true;
+	}
+	GFX_FREE(extensions);
+	return support_swapchain;
+}
 
 static bool get_physical_device(gfx_device_t *device)
 {
@@ -24,28 +148,24 @@ static bool get_physical_device(gfx_device_t *device)
 	result = vkEnumeratePhysicalDevices(VK_DEVICE->instance, &device_count, NULL);
 	if (result != VK_SUCCESS)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't enumerate physical devices");
+		GFX_ERROR_CALLBACK("can't enumerate physical devices: %s (%d)", vk_err2str(result), result);
 		return false;
 	}
 	if (device_count == 0)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't enumerate physical devices");
+		GFX_ERROR_CALLBACK("no physical devices available");
 		return false;
 	}
 	VkPhysicalDevice *devices = GFX_MALLOC(sizeof(*devices) * device_count);
 	if (devices == NULL)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't allocate physical devices");
+		GFX_ERROR_CALLBACK("can't allocate physical devices: %s (%d)", strerror(errno), errno);
 		return false;
 	}
 	result = vkEnumeratePhysicalDevices(VK_DEVICE->instance, &device_count, devices);
 	if (result != VK_SUCCESS)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't enumerate physical devices");
+		GFX_ERROR_CALLBACK("can't enumerate physical devices: %s (%d)", vk_err2str(result), result);
 		GFX_FREE(devices);
 		return false;
 	}
@@ -55,59 +175,74 @@ static bool get_physical_device(gfx_device_t *device)
 		vkGetPhysicalDeviceProperties(devices[i], &device_properties);
 		if (device_properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 			continue;
+		if (!get_queues_id(device, devices[i]))
+			continue;
+		if (!support_extensions(devices[i]))
+			continue;
+		uint32_t formats_count;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(devices[i], VK_DEVICE->surface, &formats_count, NULL);
+		if (!formats_count)
+			continue;
+		uint32_t present_modes_count;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(devices[i], VK_DEVICE->surface, &present_modes_count, NULL);
+		if (!present_modes_count)
+			continue;
+		VkSurfaceFormatKHR *formats = GFX_MALLOC(sizeof(*formats) * formats_count);
+		if (!formats)
+		{
+			GFX_ERROR_CALLBACK("formats allocation failed: %s (%d)", strerror(errno), errno);
+			GFX_FREE(devices);
+			return false;
+		}
+		vkGetPhysicalDeviceSurfaceFormatsKHR(devices[i], VK_DEVICE->surface, &formats_count, formats);
+		VkPresentModeKHR *present_modes = GFX_MALLOC(sizeof(*present_modes) * present_modes_count);
+		if (!present_modes)
+		{
+			GFX_ERROR_CALLBACK("present modes allocation failed: %s (%d)", strerror(errno), errno);
+			GFX_FREE(formats);
+			GFX_FREE(devices);
+			return false;
+		}
+		vkGetPhysicalDeviceSurfacePresentModesKHR(devices[i], VK_DEVICE->surface, &present_modes_count, present_modes);
+		VK_DEVICE->present_modes = present_modes;
+		VK_DEVICE->present_modes_count = present_modes_count;
+		VK_DEVICE->surface_formats = formats;
+		VK_DEVICE->surface_formats_count = formats_count;
 		VK_DEVICE->physical_device = devices[i];
 		GFX_FREE(devices);
 		return true;
 	}
-	if (gfx_error_callback)
-		gfx_error_callback("can't find suitable physical device");
+	GFX_ERROR_CALLBACK("can't find suitable physical device");
+	GFX_FREE(devices);
 	return false;
-}
-
-static bool get_queues(gfx_device_t *device)
-{
-	uint32_t queue_family_count = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(VK_DEVICE->physical_device, &queue_family_count, NULL);
-	VkQueueFamilyProperties *queue_families = GFX_MALLOC(sizeof(*queue_families) * queue_family_count);
-	if (!queue_families)
-	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't allocate queue families");
-		return false;
-	}
-	bool graphics_found = false;
-	for (uint32_t i = 0; i < queue_family_count; ++i)
-	{
-		if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			VK_DEVICE->graphics_queue = i;
-			graphics_found = true;
-		}
-	}
-	GFX_FREE(queue_families);
-	return graphics_found;
 }
 
 static bool create_device(gfx_device_t *device)
 {
 	static const char *extensions[] =
 	{
-		"VK_KHR_swapchain",
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	};
 	float queue_priority = 1;
-	VkDeviceQueueCreateInfo queue_create_info;
-	queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queue_create_info.pNext = NULL;
-	queue_create_info.flags = 0;
-	queue_create_info.queueFamilyIndex = VK_DEVICE->graphics_queue;
-	queue_create_info.queueCount = 1;
-	queue_create_info.pQueuePriorities = &queue_priority;
+	VkDeviceQueueCreateInfo queues_create_info[2];
+	queues_create_info[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queues_create_info[0].pNext = NULL;
+	queues_create_info[0].flags = 0;
+	queues_create_info[0].queueFamilyIndex = VK_DEVICE->graphics_family;
+	queues_create_info[0].queueCount = 1;
+	queues_create_info[0].pQueuePriorities = &queue_priority;
+	queues_create_info[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queues_create_info[1].pNext = NULL;
+	queues_create_info[1].flags = 0;
+	queues_create_info[1].queueFamilyIndex = VK_DEVICE->present_family;
+	queues_create_info[1].queueCount = 1;
+	queues_create_info[1].pQueuePriorities = &queue_priority;
 	VkDeviceCreateInfo create_info;
 	create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	create_info.pNext = NULL;
 	create_info.flags = 0;
-	create_info.queueCreateInfoCount = 1;
-	create_info.pQueueCreateInfos = &queue_create_info;
+	create_info.queueCreateInfoCount = sizeof(queues_create_info) / sizeof(*queues_create_info);
+	create_info.pQueueCreateInfos = queues_create_info;
 	create_info.enabledLayerCount = 0;
 	create_info.ppEnabledLayerNames = NULL;
 	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
@@ -116,10 +251,162 @@ static bool create_device(gfx_device_t *device)
 	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, NULL, &VK_DEVICE->vk_device);
 	if (result != VK_SUCCESS)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't create device");
+		GFX_ERROR_CALLBACK("can't create device: %s (%d)", strerror(errno), errno);
 		return false;
 	}
+	vkGetDeviceQueue(VK_DEVICE->vk_device, VK_DEVICE->graphics_family, 0, &VK_DEVICE->graphics_queue);
+	vkGetDeviceQueue(VK_DEVICE->vk_device, VK_DEVICE->present_family, 0, &VK_DEVICE->present_queue);
+	return true;
+}
+
+static VkSurfaceFormatKHR *get_surface_format(gfx_device_t *device)
+{
+	for (uint32_t i = 0; i < VK_DEVICE->surface_formats_count; ++i)
+	{
+		VkSurfaceFormatKHR *format = &VK_DEVICE->surface_formats[i];
+		if (format->format != VK_FORMAT_B8G8R8A8_SRGB
+		 || format->colorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			continue;
+		return format;
+	}
+	return &VK_DEVICE->surface_formats[0];
+}
+
+static VkPresentModeKHR get_present_mode(gfx_device_t *device)
+{
+	for (uint32_t i = 0; i < VK_DEVICE->present_modes_count; ++i)
+	{
+		if (VK_DEVICE->present_modes[i] == VK_DEVICE->present_mode)
+			return VK_DEVICE->present_mode;
+	}
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+static VkExtent2D get_extent(gfx_device_t *device)
+{
+	if (VK_DEVICE->surface_capabilities.currentExtent.width != UINT32_MAX)
+		return VK_DEVICE->surface_capabilities.currentExtent;
+	VkExtent2D extent;
+	extent.width = device->window->width;
+	extent.height = device->window->height;
+	if (extent.width < VK_DEVICE->surface_capabilities.minImageExtent.width)
+		extent.width = VK_DEVICE->surface_capabilities.minImageExtent.width;
+	else if (extent.height > VK_DEVICE->surface_capabilities.maxImageExtent.width)
+		extent.height = VK_DEVICE->surface_capabilities.maxImageExtent.width;
+	if (extent.height < VK_DEVICE->surface_capabilities.minImageExtent.height)
+		extent.height = VK_DEVICE->surface_capabilities.minImageExtent.height;
+	else if (extent.height > VK_DEVICE->surface_capabilities.maxImageExtent.height)
+		extent.height = VK_DEVICE->surface_capabilities.maxImageExtent.height;
+	return extent;
+}
+
+static bool create_swapchain(gfx_device_t *device)
+{
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VK_DEVICE->physical_device, VK_DEVICE->surface, &VK_DEVICE->surface_capabilities);
+	VkSurfaceFormatKHR *surface_format = get_surface_format(device);
+	VkPresentModeKHR present_mode = get_present_mode(device);
+	VkExtent2D extent = get_extent(device);
+	uint32_t image_count = VK_DEVICE->surface_capabilities.minImageCount + 1;
+	if (VK_DEVICE->surface_capabilities.maxImageCount && image_count > VK_DEVICE->surface_capabilities.maxImageCount)
+		image_count = VK_DEVICE->surface_capabilities.maxImageCount;
+	VK_DEVICE->swap_chain_format = surface_format->format;
+	VkSwapchainCreateInfoKHR create_info;
+	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
+	create_info.surface = VK_DEVICE->surface;
+	create_info.minImageCount = image_count;
+	create_info.imageFormat = surface_format->format;
+	create_info.imageColorSpace = surface_format->colorSpace;
+	create_info.imageExtent = extent;
+	create_info.imageArrayLayers = 1;
+	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	if (VK_DEVICE->graphics_family != VK_DEVICE->present_family)
+	{
+		uint32_t families[2] = {VK_DEVICE->graphics_family, VK_DEVICE->present_family};
+		create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		create_info.queueFamilyIndexCount = 2;
+		create_info.pQueueFamilyIndices = families;
+	}
+	else
+	{
+		create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		create_info.queueFamilyIndexCount = 0;
+		create_info.pQueueFamilyIndices = NULL;
+	}
+	create_info.preTransform = VK_DEVICE->surface_capabilities.currentTransform;
+	create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	create_info.presentMode = present_mode;
+	create_info.clipped = VK_TRUE;
+	create_info.oldSwapchain = VK_DEVICE->swap_chain;
+	VkResult result = vkCreateSwapchainKHR(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->swap_chain);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't create swapchain: %s (%d)", vk_err2str(result), result);
+		return false;
+	}
+	uint32_t images_count = 0;
+	result = vkGetSwapchainImagesKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, &images_count, NULL);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't get swapchain images count: %s (%d)", vk_err2str(result), result);
+		return false;
+	}
+	VkImage *images = GFX_MALLOC(sizeof(*images) * images_count);
+	if (!images)
+	{
+		GFX_ERROR_CALLBACK("can't allocate images: %s (%d)", strerror(errno), errno);
+		return false;
+	}
+	result = vkGetSwapchainImagesKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, &images_count, images);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't get swapchain images: %s (%d)", vk_err2str(result), result);
+		return false;
+	}
+	GFX_FREE(VK_DEVICE->surface_images);
+	VK_DEVICE->surface_images = images;
+	VK_DEVICE->surface_images_count = images_count;
+	return true;
+}
+
+static bool create_image_views(gfx_device_t *device)
+{
+	uint32_t image_views_count = VK_DEVICE->surface_images_count;
+	VkImageView *image_views = GFX_MALLOC(sizeof(*image_views) * image_views_count);
+	if (!image_views)
+	{
+		GFX_ERROR_CALLBACK("can't allocate image views: %s (%d)", strerror(errno), errno);
+		return false;
+	}
+	for (uint32_t i = 0; i < image_views_count; ++i)
+	{
+		VkImageViewCreateInfo create_info;
+		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		create_info.pNext = NULL;
+		create_info.flags = 0;
+		create_info.image = VK_DEVICE->surface_images[i];
+		create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		create_info.format = VK_DEVICE->swap_chain_format;
+		create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.subresourceRange.aspectMask = 0;
+		create_info.subresourceRange.baseMipLevel = 0;
+		create_info.subresourceRange.levelCount = 1;
+		create_info.subresourceRange.baseArrayLayer = 0;
+		create_info.subresourceRange.layerCount = 1;
+		VkResult result = vkCreateImageView(VK_DEVICE->vk_device, &create_info, NULL, &image_views[i]);
+		if (result != VK_SUCCESS)
+		{
+			GFX_ERROR_CALLBACK("can't allocate image views: %s (%d)", vk_err2str(result), result);
+			GFX_FREE(image_views);
+			return false;
+		}
+	}
+	VK_DEVICE->surface_image_views_count = image_views_count;
+	VK_DEVICE->surface_image_views = image_views;
 	return true;
 }
 
@@ -133,8 +420,7 @@ static bool create_command_pool(gfx_device_t *device)
 	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->command_pool);
 	if (result != VK_SUCCESS)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't create vulkan command pool");
+		GFX_ERROR_CALLBACK("can't create vulkan command pool: %s (%d)", vk_err2str(result), result);
 		return false;
 	}
 	return true;
@@ -151,8 +437,7 @@ static bool create_command_buffers(gfx_device_t *device)
 	VkResult result = vkAllocateCommandBuffers(VK_DEVICE->vk_device, &allocate_info, &VK_DEVICE->command_buffer);
 	if (result != VK_SUCCESS)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("can't create vulkan command buffer");
+		GFX_ERROR_CALLBACK("can't create vulkan command buffer: %s (%d)", vk_err2str(result), result);
 		return false;
 	}
 	return true;
@@ -161,34 +446,38 @@ static bool create_command_buffers(gfx_device_t *device)
 static bool vk_ctr(gfx_device_t *device, gfx_window_t *window)
 {
 	VkResult result;
+	VK_DEVICE->present_mode = VK_PRESENT_MODE_FIFO_KHR;
 	if (!gfx_device_vtable.ctr(device, window))
 		return false;
-	printf("getting physical device\n");
 	if (!get_physical_device(device))
 		return false;
-	printf("getting queues\n");
-	if (!get_queues(device))
-		return false;
-	printf("creating device\n");
 	if (!create_device(device))
 		return false;
-	printf("creating command pool\n");
+	if (!create_swapchain(device))
+		return false;
+	if (!create_image_views(device))
+		return false;
 	if (!create_command_pool(device))
 		return false;
-	printf("creating command buffers\n");
 	if (!create_command_buffers(device))
 		return false;
-	printf("end\n");
 	return true;
 }
 
 static void vk_dtr(gfx_device_t *device)
 {
+	for (uint32_t i = 0; i < VK_DEVICE->surface_image_views_count; ++i)
+		vkDestroyImageView(VK_DEVICE->vk_device, VK_DEVICE->surface_image_views[i], NULL);
 	vkFreeCommandBuffers(VK_DEVICE->vk_device, VK_DEVICE->command_pool, 1, &VK_DEVICE->command_buffer);
 	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, NULL);
+	vkDestroySwapchainKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, NULL);
 	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, NULL);
 	vkDestroyInstance(VK_DEVICE->instance, NULL);
 	vkDestroyDevice(VK_DEVICE->vk_device, NULL);
+	GFX_FREE(VK_DEVICE->surface_image_views);
+	GFX_FREE(VK_DEVICE->surface_formats);
+	GFX_FREE(VK_DEVICE->surface_images);
+	GFX_FREE(VK_DEVICE->present_modes);
 	gfx_device_vtable.dtr(device);
 }
 
@@ -346,11 +635,17 @@ static bool vk_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum gf
 {
 	VkShaderModuleCreateInfo create_info;
 	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
 	create_info.codeSize = len;
 	create_info.pCode = (const uint32_t*)data;
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(VK_DEVICE->vk_device, &create_info, NULL, (VkShaderModule*)&shader->handle.ptr) != VK_SUCCESS)
+	VkResult result = vkCreateShaderModule(VK_DEVICE->vk_device, &create_info, NULL, (VkShaderModule*)&shader->handle.ptr);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't create shader module: %s (%d)", vk_err2str(result), result);
 		return false;
+	}
 	return true;
 }
 
@@ -359,17 +654,23 @@ static void vk_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 	if (!shader || !shader->handle.ptr)
 		return;
 	vkDestroyShaderModule(VK_DEVICE->vk_device, (VkShaderModule)shader->handle.ptr, NULL);
+	shader->handle.ptr = NULL;
 }
 
 static bool vk_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
 {
+	assert(!program->handle.ptr);
 	VkPipelineShaderStageCreateInfo vert_info;
 	vert_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vert_info.pNext = NULL;
+	vert_info.flags = 0;
 	vert_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	vert_info.module = (VkShaderModule)vertex_shader->handle.ptr;
 	vert_info.pName = "main";
 	VkPipelineShaderStageCreateInfo frag_info;
 	frag_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	frag_info.pNext = NULL;
+	frag_info.flags = 0;
 	frag_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	frag_info.module = (VkShaderModule)fragment_shader->handle.ptr;
 	frag_info.pName = "main";
@@ -377,12 +678,11 @@ static bool vk_create_program(gfx_device_t *device, gfx_program_t *program, cons
 	return true;
 }
 
-static void vk_bind_program(gfx_device_t *device, const gfx_program_t *program)
-{
-}
-
 static void vk_delete_program(gfx_device_t *device, gfx_program_t *program)
 {
+	if (!program || !program->handle.ptr)
+		return;
+	program->handle.ptr = NULL;
 }
 
 static void vk_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset)
@@ -478,9 +778,14 @@ static gfx_device_vtable_t vk_vtable =
 
 void gfx_vk_set_swap_interval(gfx_device_t *device, int interval)
 {
-	//-1: VK_PRESENT_MODE_FIFO_RELAXED_KHR
-	// 0: VK_PRESENT_MODE_IMMEDIATE_KHR
-	// 1: VK_PRESENT_MODE_FIFO_KHR
+	if (interval < 0)
+		VK_DEVICE->present_mode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+	else if (!interval)
+		VK_DEVICE->present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+	else
+		VK_DEVICE->present_mode = VK_PRESENT_MODE_FIFO_KHR;
+	if (create_swapchain(device))
+		create_image_views(device);
 }
 
 void gfx_vk_swap_buffers(gfx_device_t *device)
@@ -493,6 +798,7 @@ gfx_device_t *gfx_vk_device_new(gfx_window_t *window, VkInstance instance, VkSur
 	gfx_vk_device_t *device = GFX_MALLOC(sizeof(*device));
 	if (!device)
 		return NULL;
+	memset(device, 0, sizeof(*device));
 	gfx_device_t *dev = &device->device;
 	dev->vtable = &vk_vtable;
 	device->instance = instance;

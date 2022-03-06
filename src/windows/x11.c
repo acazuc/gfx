@@ -403,8 +403,7 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 					}
 					else
 					{
-						if (gfx_error_callback)
-							gfx_error_callback("invalid event codepoint");
+						GFX_ERROR_CALLBACK("invalid event codepoint");
 					}
 				}
 			}
@@ -696,8 +695,7 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 			XFreeEventData(window->display, &event->xcookie);
 			break;
 		default:
-			if (gfx_error_callback)
-				gfx_error_callback("unhandled event: %u", event->type);
+			GFX_ERROR_CALLBACK("unhandled event: %u", event->type);
 			break;
 	}
 }

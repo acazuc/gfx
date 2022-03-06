@@ -56,15 +56,17 @@ static bool vk_x11_create_device(gfx_window_t *window)
 				create_info.pNext = NULL;
 				create_info.flags = 0;
 				create_info.pApplicationInfo = NULL;
-				create_info.enabledLayerCount = 0;
-				create_info.ppEnabledLayerNames = NULL;
+				const char *layers[] =
+				{
+				};
+				create_info.enabledLayerCount = sizeof(layers) / sizeof(*layers);
+				create_info.ppEnabledLayerNames = layers;
 				create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
 				create_info.ppEnabledExtensionNames = extensions;
 				result = vkCreateInstance(&create_info, NULL, &instance);
 				if (result != VK_SUCCESS)
 				{
-					if (gfx_error_callback)
-						gfx_error_callback("can't create vulkan instance");
+					GFX_ERROR_CALLBACK("can't create vulkan instance");
 					return false;
 				}
 			}
@@ -78,8 +80,7 @@ static bool vk_x11_create_device(gfx_window_t *window)
 				result = vkCreateXlibSurfaceKHR(instance, &create_info, NULL, &surface);
 				if (result != VK_SUCCESS)
 				{
-					if (gfx_error_callback)
-						gfx_error_callback("can't create vulkan surface");
+					GFX_ERROR_CALLBACK("can't create vulkan surface");
 					vkDestroyInstance(instance, NULL);
 					return false;
 				}
@@ -195,21 +196,35 @@ static gfx_window_vtable_t vk_x11_vtable =
 
 gfx_window_t *gfx_vk_x11_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
+	XVisualInfo *vi;
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_vk_x11_window_t));
 	if (!window)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("allocation failed");
+		GFX_ERROR_CALLBACK("allocation failed");
 		return NULL;
 	}
 	memset(window, 0, sizeof(gfx_vk_x11_window_t));
 	window->vtable = &vk_x11_vtable;
 	if (!window->vtable->ctr(window, properties))
 		goto err;
+	int nitems;
+	vi = XGetVisualInfo(X11_WINDOW->display, VisualNoMask, NULL, &nitems);
+	if (nitems == 0)
+	{
+		GFX_ERROR_CALLBACK("can't get visual info");
+		goto err;
+	}
+	if (!gfx_x11_create_window(X11_WINDOW, title, width, height, vi))
+	{
+		GFX_ERROR_CALLBACK("failed to create window");
+		goto err;
+	}
+	XFree(vi);
 	return window;
 
 err:
 	window->vtable->dtr(window);
+	XFree(vi);
 	GFX_FREE(window);
 	return NULL;
 }

@@ -257,8 +257,7 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_glx_window_t));
 	if (!window)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("allocation failed");
+		GFX_ERROR_CALLBACK("allocation failed");
 		return NULL;
 	}
 	memset(window, 0, sizeof(gfx_glx_window_t));
@@ -272,8 +271,7 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 	vi = glXGetVisualFromFBConfig(X11_WINDOW->display, configs[0]);
 	if (!gfx_x11_create_window(X11_WINDOW, title, width, height, vi))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create window");
+		GFX_ERROR_CALLBACK("failed to create window");
 		goto err;
 	}
 	GLX_WINDOW->window = glXCreateWindow(X11_WINDOW->display, configs[0], X11_WINDOW->window, NULL);

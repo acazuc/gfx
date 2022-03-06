@@ -128,8 +128,7 @@ static bool ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 	window->keys = GFX_MALLOC((GFX_KEY_LAST + 7) / 8);
 	if (!window->keys)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("allocation failed");
+		GFX_ERROR_CALLBACK("allocation failed");
 		return false;
 	}
 	memset(window->keys, 0, (GFX_KEY_LAST + 7) / 8);

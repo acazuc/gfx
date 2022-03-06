@@ -75,9 +75,9 @@ typedef struct gfx_gl_device_s
 
 extern gfx_device_vtable_t gfx_gl_device_vtable;
 
-# ifndef NDEBUG
+#ifndef NDEBUG
 
-#  define GL_CALL_DEBUG(fn) \
+# define GL_CALL_DEBUG(fn) \
 do \
 { \
 	GLenum err; \
@@ -85,27 +85,24 @@ do \
 		gfx_gl_errors(err, #fn,  __FILE__, __LINE__); \
 } while (0)
 
-# else
+#else
 
-#  define GL_CALL_DEBUG(fn) \
+# define GL_CALL_DEBUG(fn) \
 do \
 { \
 } while (0)
 
-# endif
+#endif
 
-# define GL_CALL(device, fn, ...) do { device->fn(__VA_ARGS__); GL_CALL_DEBUG(fn); } while (0)
-# define GL_CALL_RET(ret, device, fn, ...) do { ret = device->fn(__VA_ARGS__); GL_CALL_DEBUG(fn); } while (0)
+#define GL_CALL(device, fn, ...) do { device->fn(__VA_ARGS__); GL_CALL_DEBUG(fn); } while (0)
+#define GL_CALL_RET(ret, device, fn, ...) do { ret = device->fn(__VA_ARGS__); GL_CALL_DEBUG(fn); } while (0)
 
-# define GL_LOAD_PROC(device, fn) \
+#define GL_LOAD_PROC(device, fn) \
 do \
 { \
 	gl_load_proc((gfx_device_t*)device, "gl" #fn, (void**)&device->fn); \
 	if (device->fn == NULL) \
-	{ \
-		if (gfx_error_callback) \
-			gfx_error_callback("failed to load gl" #fn); \
-	} \
+		GFX_ERROR_CALLBACK("failed to load gl" #fn); \
 } while (0)
 
 static inline void gl_load_proc(gfx_device_t *device, const char *name, void **ptr)

@@ -75,6 +75,13 @@ typedef struct gfx_memory_s
 #define GFX_REALLOC(ptr, size) (gfx_memory.realloc ? gfx_memory.realloc(ptr, size) : realloc(ptr, size))
 #define GFX_FREE(ptr) (gfx_memory.free ? gfx_memory.free(ptr) : free(ptr))
 
+#define GFX_ERROR_CALLBACK(...) \
+do \
+{ \
+	if (gfx_error_callback) \
+		gfx_error_callback(__VA_ARGS__); \
+} while (0)
+
 extern gfx_error_callback_t gfx_error_callback;
 extern gfx_memory_t gfx_memory;
 

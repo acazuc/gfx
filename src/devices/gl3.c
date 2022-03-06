@@ -857,8 +857,7 @@ static bool gl3_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum g
 		//GL3_CALL(GetShaderiv, shader->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL3_CALL(GetShaderInfoLog, shader->handle.u32[0], sizeof(error), NULL, error);
-		if (gfx_error_callback)
-			gfx_error_callback("%s", error);
+		GFX_ERROR_CALLBACK("%s", error);
 #endif
 		return false;
 	}
@@ -902,8 +901,7 @@ static bool gl3_create_program(gfx_device_t *device, gfx_program_t *program, con
 		//GL3_CALL(GetProgramiv, program->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL3_CALL(GetProgramInfoLog, program->handle.u32[0], sizeof(error), NULL, error);
-		if (gfx_error_callback)
-			gfx_error_callback("%s", error);
+		GFX_ERROR_CALLBACK("%s", error);
 #endif
 		return false;
 	}
@@ -1028,10 +1026,7 @@ static void gl3_set_render_target_texture(gfx_device_t *device, gfx_render_targe
 	{
 		GLuint status = GL3_DEVICE->CheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("invalid FBO init: %d", status);
-		}
+			GFX_ERROR_CALLBACK("invalid FBO init: %d", status);
 	}
 #endif
 }

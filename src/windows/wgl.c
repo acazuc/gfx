@@ -159,8 +159,7 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_wgl_window_t));
 	if (!window)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("malloc failed");
+		GFX_ERROR_CALLBACK("malloc failed");
 		return NULL;
 	}
 	memset(window, 0, sizeof(gfx_wgl_window_t));
@@ -170,14 +169,12 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 	gfx_win32_ctr(WIN32_WINDOW, window);
 	if (!gfx_win32_create_window(WIN32_WINDOW, title, width, height))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create window");
+		GFX_ERROR_CALLBACK("failed to create window");
 		goto err;
 	}
 	if (!(WGL_WINDOW->device = GetDC(WIN32_WINDOW->window)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("GetDC failed");
+		GFX_ERROR_CALLBACK("GetDC failed");
 		goto err;
 	}
 	HGLRC tmp_ctx;
@@ -212,14 +209,12 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 	wglDeleteContext(tmp_ctx);
 	if (!WGL_WINDOW->wglGetExtensionsStringARB)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("no wglGetExtensionsStringARB");
+		GFX_ERROR_CALLBACK("no wglGetExtensionsStringARB");
 		goto err;
 	}
 	if (!WGL_WINDOW->wglSwapIntervalEXT)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("no wglSwapIntervalEXT");
+		GFX_ERROR_CALLBACK("no wglSwapIntervalEXT");
 		goto err;
 	}
 	{
@@ -269,8 +264,7 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		WGL_WINDOW->context = WGL_WINDOW->wglCreateContextAttribsARB(WGL_WINDOW->device, NULL, attributes);
 		if (!WGL_WINDOW->context)
 		{
-			if (gfx_error_callback)
-				gfx_error_callback("wglCreateContextAttribsARB failed: %u", (unsigned)GetLastError());
+			GFX_ERROR_CALLBACK("wglCreateContextAttribsARB failed: %u", (unsigned)GetLastError());
 			goto err;
 		}
 	}
@@ -279,8 +273,7 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		WGL_WINDOW->context = wglCreateContext(WGL_WINDOW->device);
 		if (!WGL_WINDOW->context)
 		{
-			if (gfx_error_callback)
-				gfx_error_callback("wglCreateContext failed: %u", (unsigned)GetLastError());
+			GFX_ERROR_CALLBACK("wglCreateContext failed: %u", (unsigned)GetLastError());
 			goto err;
 		}
 	}

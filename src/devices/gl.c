@@ -152,8 +152,7 @@ void gfx_gl_errors(uint32_t err, const char *fn, const char *file, int line)
 			out = "unknown error";
 			break;
 	}
-	if (gfx_error_callback)
-		gfx_error_callback("%s@%s:%d %s", fn, file, line, out);
+	GFX_ERROR_CALLBACK("%s@%s:%d %s", fn, file, line, out);
 
 #undef TEST_ERR
 }

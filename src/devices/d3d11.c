@@ -143,8 +143,7 @@ static void d3d11_errors(uint32_t err, const char *fn, const char *file, int lin
 			out = buf;
 			break;
 	}
-	if (gfx_error_callback)
-		gfx_error_callback("%s@%s:%d %s", fn, file, line, out);
+	GFX_ERROR_CALLBACK("%s@%s:%d %s", fn, file, line, out);
 
 #undef TEST_ERR
 }
@@ -154,14 +153,12 @@ static bool create_default_render_target_view(gfx_device_t *device)
 	ID3D11Texture2D *back_buffer_ptr = NULL;
 	if (FAILED(IDXGISwapChain_GetBuffer(D3D11_DEVICE->swap_chain, 0, &UIID_ID3D11Texture2D, (LPVOID*)&back_buffer_ptr)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to get swap chain buffer");
+		GFX_ERROR_CALLBACK("failed to get swap chain buffer");
 		goto err;
 	}
 	if (FAILED(ID3D11Device_CreateRenderTargetView(D3D11_DEVICE->d3ddev, (ID3D11Resource*)back_buffer_ptr, NULL, &D3D11_DEVICE->default_render_target_view)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create default render target view");
+		GFX_ERROR_CALLBACK("failed to create default render target view");
 		goto err;
 	}
 	ID3D11Texture2D_Release(back_buffer_ptr);
@@ -192,8 +189,7 @@ static bool create_default_depth_stencil_view(gfx_device_t *device)
 	tex_desc.MiscFlags = 0;
 	if (FAILED(ID3D11Device_CreateTexture2D(D3D11_DEVICE->d3ddev, &tex_desc, NULL, &depth_stencil_buffer)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create default depth stencil texture");
+		GFX_ERROR_CALLBACK("failed to create default depth stencil texture");
 		goto err;
 	}
 
@@ -202,8 +198,7 @@ static bool create_default_depth_stencil_view(gfx_device_t *device)
 	view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	if (FAILED(ID3D11Device_CreateDepthStencilView(D3D11_DEVICE->d3ddev, (ID3D11Resource*)depth_stencil_buffer, &view_desc, &D3D11_DEVICE->default_depth_stencil_view)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create default depth stencil view");
+		GFX_ERROR_CALLBACK("failed to create default depth stencil view");
 		goto err;
 	}
 	ID3D11Texture2D_Release(depth_stencil_buffer);
@@ -828,14 +823,12 @@ static bool d3d11_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum
 	{
 		if (error_message)
 		{
-			if (gfx_error_callback)
-				gfx_error_callback("%s", (char*)ID3D10Blob_GetBufferPointer(error_message));
+			GFX_ERROR_CALLBACK("%s", (char*)ID3D10Blob_GetBufferPointer(error_message));
 			ID3D10Blob_Release(error_message);
 		}
 		else
 		{
-			if (gfx_error_callback)
-				gfx_error_callback("failed to compile shader");
+			GFX_ERROR_CALLBACK("failed to compile shader");
 		}
 		return false;
 	}
@@ -1208,8 +1201,7 @@ gfx_device_t *gfx_d3d11_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *s
 #endif
 	if (FAILED(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flags, &feature_level, 1, D3D11_SDK_VERSION, swap_chain_desc, swap_chain, (ID3D11Device**)&device->d3ddev, NULL, (ID3D11DeviceContext**)&device->d3dctx)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create d3d device");
+		GFX_ERROR_CALLBACK("failed to create d3d device");
 		goto err;
 	}
 	device->swap_chain = *swap_chain;

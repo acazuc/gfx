@@ -786,8 +786,7 @@ static bool gl4_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum g
 		//GL4_CALL(GetShaderiv, shader->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL4_CALL(GetShaderInfoLog, shader->handle.u32[0], sizeof(error), NULL, error);
-		if (gfx_error_callback)
-			gfx_error_callback("%s", error);
+		GFX_ERROR_CALLBACK("%s", error);
 #endif
 		return false;
 	}
@@ -831,8 +830,7 @@ static bool gl4_create_program(gfx_device_t *device, gfx_program_t *program, con
 		//GL4_CALL(GetProgramiv, program->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL4_CALL(GetProgramInfoLog, program->handle.u32[0], sizeof(error), NULL, error);
-		if (gfx_error_callback)
-			gfx_error_callback("%s", error);
+		GFX_ERROR_CALLBACK("%s", error);
 #endif
 		return false;
 	}
@@ -949,10 +947,7 @@ static void gl4_set_render_target_texture(gfx_device_t *device, gfx_render_targe
 	{
 		GLuint status = GL4_DEVICE->CheckNamedFramebufferStatus(render_target->handle.u32[0], GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE)
-		{
-			if (gfx_error_callback)
-				gfx_error_callback("invalid FBO init: %d", status);
-		}
+			GFX_ERROR_CALLBACK("invalid FBO init: %d", status);
 	}
 #endif
 }

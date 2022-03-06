@@ -314,8 +314,7 @@ static void on_character_callback(GLFWwindow *win, unsigned int codepoint)
 		}
 		else
 		{
-			if (gfx_error_callback)
-				gfx_error_callback("invalid input codepoint");
+			GFX_ERROR_CALLBACK("invalid input codepoint");
 		}
 	}
 }

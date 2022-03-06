@@ -29,7 +29,7 @@ static enum gfx_key_code get_key_code(int key_code);
 void gfx_win32_ctr(gfx_win32_window_t *window, gfx_window_t *winref)
 {
 	window->winref = winref;
-	window->application_name = "Wow";
+	window->application_name = "GFX";
 	window->window = NULL;
 	window->cursor = NULL;
 	window->hidden_cursor = false;
@@ -50,14 +50,12 @@ bool gfx_win32_create_window(gfx_win32_window_t *window, const char *title, uint
 
 	if (!(window->classname = strdup(title)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("strdup failed");
+		GFX_ERROR_CALLBACK("strdup failed");
 		return false;
 	}
 	if (!(window->hinstance = GetModuleHandle(NULL)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("GetModuleHandle failed");
+		GFX_ERROR_CALLBACK("GetModuleHandle failed");
 		return false;
 	}
 	wc.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -74,16 +72,14 @@ bool gfx_win32_create_window(gfx_win32_window_t *window, const char *title, uint
 	wc.cbSize        = sizeof(WNDCLASSEX);
 	if (!RegisterClassEx(&wc))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("RegisterCallEx failed: %lu", (long unsigned)GetLastError());
+		GFX_ERROR_CALLBACK("RegisterCallEx failed: %lu", (long unsigned)GetLastError());
 		return false;
 	}
 	pos_x = (GetSystemMetrics(SM_CXSCREEN) - width)  / 2;
 	pos_y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
 	if (!(window->window = CreateWindowExA(WS_EX_APPWINDOW, window->application_name, title, WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU | WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX, pos_x, pos_y, width, height, NULL, NULL, window->hinstance, NULL)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("CreateWindowEx failed");
+		GFX_ERROR_CALLBACK("CreateWindowEx failed");
 		return false;
 	}
 	SetWindowLongPtr(window->window, GWLP_USERDATA, (LONG_PTR)window);
@@ -321,14 +317,12 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			UINT size = sizeof(ri);
 			if (GetRawInputData(hRawInput, RID_INPUT, &ri, &size, sizeof(ri.header)) == (UINT)-1)
 			{
-				if (gfx_error_callback)
-					gfx_error_callback("GetRawInputData failed");
+				GFX_ERROR_CALLBACK("GetRawInputData failed");
 				break;
 			}
 			if (ri.header.dwType != RIM_TYPEMOUSE)
 			{
-				if (gfx_error_callback)
-					gfx_error_callback("invalid WM_INPUT type: %u", (unsigned int)ri.header.dwType);
+				GFX_ERROR_CALLBACK("invalid WM_INPUT type: %u", (unsigned int)ri.header.dwType);
 				break;
 			}
 			if (ri.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)
@@ -343,8 +337,7 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			}
 			else
 			{
-				if (gfx_error_callback)
-					gfx_error_callback("not RELATIVE or ABSOLUTE mouse move: %u", ri.data.mouse.usFlags);
+				GFX_ERROR_CALLBACK("not RELATIVE or ABSOLUTE mouse move: %u", ri.data.mouse.usFlags);
 				break;
 			}
 			if (window->winref->mouse_move_callback)
@@ -469,14 +462,12 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 					}
 					else
 					{
-						if (gfx_error_callback)
-							gfx_error_callback("invalid event codepoint");
+						GFX_ERROR_CALLBACK("invalid event codepoint");
 					}
 				}
 				else
 				{
-					if (gfx_error_callback)
-						gfx_error_callback("invalid event codepoint");
+					GFX_ERROR_CALLBACK("invalid event codepoint");
 				}
 			}
 			break;
@@ -497,8 +488,7 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 				}
 				else
 				{
-					if (gfx_error_callback)
-						gfx_error_callback("invalid event codepoint");
+					GFX_ERROR_CALLBACK("invalid event codepoint");
 				}
 			}
 			break;
@@ -522,8 +512,7 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		case WM_NCDESTROY:
 			return DefWindowProc(hwnd, message, wparam, lparam);
 		default:
-			if (gfx_error_callback)
-				gfx_error_callback("unhandled window message: %u", message);
+			GFX_ERROR_CALLBACK("unhandled window message: %u", message);
 			return DefWindowProc(hwnd, message, wparam, lparam);
 	}
 	return 0;

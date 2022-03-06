@@ -202,8 +202,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_d3d_window_t));
 	if (!window)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("malloc failed");
+		GFX_ERROR_CALLBACK("malloc failed");
 		return NULL;
 	}
 	memset(window, 0, sizeof(gfx_d3d_window_t));
@@ -218,8 +217,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 	WIN32_WINDOW->on_resize = d3d_on_resize;
 	if (!gfx_win32_create_window(WIN32_WINDOW, title, width, height))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create window");
+		GFX_ERROR_CALLBACK("failed to create window");
 		window->vtable->dtr(window);
 		GFX_FREE(window);
 		return NULL;
@@ -234,39 +232,33 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 	DXGI_MODE_DESC *modes = NULL;
 	if (FAILED(CreateDXGIFactory(&UIID_IDXGIFactory, (void**)&factory)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to create DXGI factory");
+		GFX_ERROR_CALLBACK("failed to create DXGI factory");
 		goto err;
 	}
 	if (FAILED(IDXGIFactory_EnumAdapters(factory, 0, &adapter)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to enumerate adapters");
+		GFX_ERROR_CALLBACK("failed to enumerate adapters");
 		goto err;
 	}
 	if (FAILED(IDXGIAdapter_EnumOutputs(adapter, 0, &adapter_output)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to enumerate outputs");
+		GFX_ERROR_CALLBACK("failed to enumerate outputs");
 		goto err;
 	}
 	if (FAILED(IDXGIOutput_GetDisplayModeList(adapter_output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, NULL)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to get display mode list number");
+		GFX_ERROR_CALLBACK("failed to get display mode list number");
 		goto err;
 	}
 	modes = (DXGI_MODE_DESC*)GFX_MALLOC(sizeof(*modes) * num_modes);
 	if (!modes)
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to malloc dxgi modes");
+		GFX_ERROR_CALLBACK("failed to malloc dxgi modes");
 		goto err;
 	}
 	if (FAILED(IDXGIOutput_GetDisplayModeList(adapter_output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &num_modes, modes)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to get dispaly mode list");
+		GFX_ERROR_CALLBACK("failed to get dispaly mode list");
 		goto err;
 	}
 	for (uint32_t i = 0; i < num_modes; ++i)
@@ -279,8 +271,7 @@ gfx_window_t *gfx_d3d_window_new(const char *title, uint32_t width, uint32_t hei
 	}
 	if (FAILED(IDXGIAdapter_GetDesc(adapter, &adapter_desc)))
 	{
-		if (gfx_error_callback)
-			gfx_error_callback("failed to get desc");
+		GFX_ERROR_CALLBACK("failed to get desc");
 		goto err;
 	}
 	D3D_WINDOW->swap_chain_desc.BufferCount = 1;
