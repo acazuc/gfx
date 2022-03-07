@@ -6,8 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern gfx_window_vtable_t gfx_window_vtable;
-
 typedef struct gfx_glx_window_s
 {
 	gfx_gl_window_t gl;
@@ -149,7 +147,7 @@ static void glx_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
 	gfx_x11_set_mouse_position(X11_WINDOW, x, y);
 }
 
-static gfx_window_vtable_t glx_vtable =
+static const gfx_window_vtable_t glx_vtable =
 {
 	GFX_WINDOW_VTABLE_DEF(glx)
 };

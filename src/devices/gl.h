@@ -73,7 +73,7 @@ typedef struct gfx_gl_device_s
 	uint8_t states[(USHRT_MAX + 7) / 8];
 } gfx_gl_device_t;
 
-extern gfx_device_vtable_t gfx_gl_device_vtable;
+extern const gfx_device_vtable_t gfx_gl_device_vtable;
 
 #ifndef NDEBUG
 

@@ -857,7 +857,7 @@ static bool gl3_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum g
 		//GL3_CALL(GetShaderiv, shader->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL3_CALL(GetShaderInfoLog, shader->handle.u32[0], sizeof(error), NULL, error);
-		GFX_ERROR_CALLBACK("%s", error);
+		GFX_ERROR_CALLBACK("can't compile GLSL shader %s", error);
 #endif
 		return false;
 	}
@@ -901,7 +901,7 @@ static bool gl3_create_program(gfx_device_t *device, gfx_program_t *program, con
 		//GL3_CALL(GetProgramiv, program->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL3_CALL(GetProgramInfoLog, program->handle.u32[0], sizeof(error), NULL, error);
-		GFX_ERROR_CALLBACK("%s", error);
+		GFX_ERROR_CALLBACK("can't compile GLSL program: %s", error);
 #endif
 		return false;
 	}
@@ -1170,7 +1170,7 @@ static void gl3_set_point_size(gfx_device_t *device, float point_size)
 	GL3_CALL(PointSize, point_size);
 }
 
-static gfx_device_vtable_t gl3_vtable =
+static const gfx_device_vtable_t gl3_vtable =
 {
 	GFX_DEVICE_VTABLE_DEF(gl3)
 };

@@ -107,7 +107,7 @@ typedef struct gfx_window_vtable_s gfx_window_vtable_t;
 
 struct gfx_window_s
 {
-	gfx_window_vtable_t *vtable;
+	const gfx_window_vtable_t *vtable;
 	gfx_key_down_callback_t key_down_callback;
 	gfx_key_press_callback_t key_press_callback;
 	gfx_key_up_callback_t key_up_callback;

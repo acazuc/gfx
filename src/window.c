@@ -143,7 +143,7 @@ static void dtr(gfx_window_t *window)
 		gfx_device_delete(window->device);
 }
 
-gfx_window_vtable_t gfx_window_vtable =
+const gfx_window_vtable_t gfx_window_vtable =
 {
 	.ctr = ctr,
 	.dtr = dtr,

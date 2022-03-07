@@ -413,7 +413,7 @@ static void gl_tick(gfx_device_t *device)
 	pthread_mutex_unlock(&GL_DEVICE->delete_mutex);
 }
 
-gfx_device_vtable_t gfx_gl_device_vtable =
+const gfx_device_vtable_t gfx_gl_device_vtable =
 {
 	.ctr = gl_ctr,
 	.dtr = gl_dtr,

@@ -27,6 +27,8 @@ typedef struct gfx_window_vtable_s
 	void (*set_mouse_position)(gfx_window_t *window, int32_t x, int32_t y);
 } gfx_window_vtable_t;
 
+extern const gfx_window_vtable_t gfx_window_vtable;
+
 #define GFX_WINDOW_VTABLE_DEF(prefix) \
 	.ctr                  = prefix##_ctr, \
 	.dtr                  = prefix##_dtr, \

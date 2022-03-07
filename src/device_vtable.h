@@ -67,7 +67,7 @@ typedef struct gfx_device_vtable_s
 	void (*set_point_size)(gfx_device_t *device, float point_size);
 } gfx_device_vtable_t;
 
-extern gfx_device_vtable_t gfx_device_vtable;
+extern const gfx_device_vtable_t gfx_device_vtable;
 
 #define GFX_DEVICE_VTABLE_DEF(prefix) \
 	.ctr  = prefix##_ctr, \

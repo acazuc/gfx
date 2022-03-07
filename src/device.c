@@ -43,7 +43,7 @@ static void tick(gfx_device_t *device)
 	device->lines_count = 0;
 }
 
-gfx_device_vtable_t gfx_device_vtable =
+const gfx_device_vtable_t gfx_device_vtable =
 {
 	.ctr  = ctr,
 	.dtr  = dtr,

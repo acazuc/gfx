@@ -90,24 +90,24 @@ static const D3D11_FILTER filtering[27] =
 
 static UINT row_pitches[14] = {4, 16, 8, 12, 4, 2, 2, 2, 2, 1, 2, 2, 4, 4};
 
-# ifndef NDEBUG
+#ifndef NDEBUG
 
-#  define D3D11_CALL_DEBUG(fn, err) \
+# define D3D11_CALL_DEBUG(fn, err) \
 do \
 { \
 	if (err) \
 		d3d11_errors(err, #fn, __FILE__, __LINE__); \
 } while (0)
 
-# else
+#else
 
-#  define D3D11_CALL_DEBUG(fn, res) \
+# define D3D11_CALL_DEBUG(fn, res) \
 do \
 { \
 	(void)res; \
 } while (0)
 
-# endif
+#endif
 
 #define D3D11_CALL(fn, ...) \
 do \
@@ -1182,7 +1182,7 @@ void gfx_d3d11_resize(gfx_device_t *device)
 	create_default_depth_stencil_view(device);
 }
 
-gfx_device_vtable_t d3d11_vtable =
+static const gfx_device_vtable_t d3d11_vtable =
 {
 	GFX_DEVICE_VTABLE_DEF(d3d11)
 };

@@ -17,8 +17,6 @@
 
 DEFINE_GUID(UIID_IDXGIFactory, 0x7b7166ec, 0x21c7, 0x44ae, 0xb2, 0x1a, 0xc9, 0xae, 0x32, 0x1a, 0xe3, 0x69);
 
-extern gfx_window_vtable_t gfx_window_vtable;
-
 typedef struct gfx_d3d_window_s
 {
 	gfx_window_t window;
@@ -192,7 +190,7 @@ static void d3d_on_resize(gfx_window_t *window)
 	}
 }
 
-static gfx_window_vtable_t d3d_vtable =
+static const gfx_window_vtable_t d3d_vtable =
 {
 	GFX_WINDOW_VTABLE_DEF(d3d)
 };

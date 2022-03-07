@@ -652,7 +652,7 @@ static void d3d9_set_point_size(gfx_device_t *device, float pointSize)
 	D3D9_DEVICE->d3ddev->SetRenderState(D3DRS_POINTSIZE, pointSize);
 }
 
-static gfx_device_vtable_t d3d9_vtable =
+static const gfx_device_vtable_t d3d9_vtable =
 {
 	GFX_DEVICE_VTABLE_DEF(d3d9)
 };

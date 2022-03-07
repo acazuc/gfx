@@ -8,8 +8,6 @@
 #include <limits.h>
 #include <string.h>
 
-extern const gfx_window_vtable_t gfx_window_vtable;
-
 static const unsigned int cursors[GFX_CURSOR_LAST] =
 {
 	[GFX_CURSOR_ARROW] = XC_arrow,

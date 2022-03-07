@@ -786,7 +786,7 @@ static bool gl4_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum g
 		//GL4_CALL(GetShaderiv, shader->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL4_CALL(GetShaderInfoLog, shader->handle.u32[0], sizeof(error), NULL, error);
-		GFX_ERROR_CALLBACK("%s", error);
+		GFX_ERROR_CALLBACK("can't compile GLSL shader: %s", error);
 #endif
 		return false;
 	}
@@ -830,7 +830,7 @@ static bool gl4_create_program(gfx_device_t *device, gfx_program_t *program, con
 		//GL4_CALL(GetProgramiv, program->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
 		GL4_CALL(GetProgramInfoLog, program->handle.u32[0], sizeof(error), NULL, error);
-		GFX_ERROR_CALLBACK("%s", error);
+		GFX_ERROR_CALLBACK("can't compile GLSL program: %s", error);
 #endif
 		return false;
 	}
@@ -1088,7 +1088,7 @@ static void gl4_set_point_size(gfx_device_t *device, float point_size)
 	GL4_CALL(PointSize, point_size);
 }
 
-static gfx_device_vtable_t gl4_vtable =
+static const gfx_device_vtable_t gl4_vtable =
 {
 	GFX_DEVICE_VTABLE_DEF(gl4)
 };

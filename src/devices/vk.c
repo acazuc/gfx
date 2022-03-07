@@ -9,9 +9,79 @@
 
 #define VK_DEVICE ((gfx_vk_device_t*)device)
 
+static const VkCompareOp compare_functions[] =
+{
+	VK_COMPARE_OP_NEVER,
+	VK_COMPARE_OP_LESS,
+	VK_COMPARE_OP_LESS_OR_EQUAL,
+	VK_COMPARE_OP_EQUAL,
+	VK_COMPARE_OP_GREATER_OR_EQUAL,
+	VK_COMPARE_OP_GREATER,
+	VK_COMPARE_OP_NOT_EQUAL,
+	VK_COMPARE_OP_ALWAYS,
+};
+
+static const VkBlendFactor blend_functions[] =
+{
+	VK_BLEND_FACTOR_ZERO,
+	VK_BLEND_FACTOR_ONE,
+	VK_BLEND_FACTOR_SRC_COLOR,
+	VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
+	VK_BLEND_FACTOR_DST_COLOR,
+	VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+	VK_BLEND_FACTOR_SRC_ALPHA,
+	VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	VK_BLEND_FACTOR_DST_ALPHA,
+	VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
+	VK_BLEND_FACTOR_CONSTANT_COLOR,
+	VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,
+};
+
+static const VkBlendOp blend_equations[] =
+{
+	VK_BLEND_OP_ADD,
+	VK_BLEND_OP_SUBTRACT,
+	VK_BLEND_OP_REVERSE_SUBTRACT,
+	VK_BLEND_OP_MIN,
+	VK_BLEND_OP_MAX,
+};
+
+static const VkStencilOp stencil_operations[] =
+{
+	VK_STENCIL_OP_KEEP,
+	VK_STENCIL_OP_ZERO,
+	VK_STENCIL_OP_REPLACE,
+	VK_STENCIL_OP_INCREMENT_AND_CLAMP,
+	VK_STENCIL_OP_INCREMENT_AND_WRAP,
+	VK_STENCIL_OP_DECREMENT_AND_CLAMP,
+	VK_STENCIL_OP_DECREMENT_AND_WRAP,
+	VK_STENCIL_OP_INVERT,
+};
+
+static const VkPolygonMode fill_modes[] =
+{
+	VK_POLYGON_MODE_POINT,
+	VK_POLYGON_MODE_LINE,
+	VK_POLYGON_MODE_FILL,
+};
+
+static VkCullModeFlagBits cull_modes[] =
+{
+	VK_CULL_MODE_NONE,
+	VK_CULL_MODE_FRONT_BIT,
+	VK_CULL_MODE_BACK_BIT,
+};
+
+static const VkFrontFace front_faces[] =
+{
+	VK_FRONT_FACE_CLOCKWISE,
+	VK_FRONT_FACE_COUNTER_CLOCKWISE,
+};
+
 typedef struct gfx_vk_device_s
 {
 	gfx_device_t device;
+	VkAllocationCallbacks allocation_callbacks;
 	VkSurfaceCapabilitiesKHR surface_capabilities;
 	VkSurfaceFormatKHR *surface_formats;
 	uint32_t surface_formats_count;
@@ -77,11 +147,6 @@ static const char *vk_err2str(VkResult result)
 		TEST_ERR(VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT)
 		TEST_ERR(VK_ERROR_NOT_PERMITTED_EXT)
 		TEST_ERR(VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT)
-		TEST_ERR(VK_THREAD_IDLE_KHR)
-		TEST_ERR(VK_THREAD_DONE_KHR)
-		TEST_ERR(VK_OPERATION_DEFERRED_KHR)
-		TEST_ERR(VK_OPERATION_NOT_DEFERRED_KHR)
-		TEST_ERR(VK_PIPELINE_COMPILE_REQUIRED_EXT)
 	}
 
 	return "Unknown error";
@@ -173,8 +238,8 @@ static bool get_physical_device(gfx_device_t *device)
 	{
 		VkPhysicalDeviceProperties device_properties;
 		vkGetPhysicalDeviceProperties(devices[i], &device_properties);
-		if (device_properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			continue;
+		//if (device_properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		//	continue;
 		if (!get_queues_id(device, devices[i]))
 			continue;
 		if (!support_extensions(devices[i]))
@@ -248,7 +313,7 @@ static bool create_device(gfx_device_t *device)
 	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
 	create_info.ppEnabledExtensionNames = extensions;
 	create_info.pEnabledFeatures = NULL;
-	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, NULL, &VK_DEVICE->vk_device);
+	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->vk_device);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create device: %s (%d)", strerror(errno), errno);
@@ -339,7 +404,7 @@ static bool create_swapchain(gfx_device_t *device)
 	create_info.presentMode = present_mode;
 	create_info.clipped = VK_TRUE;
 	create_info.oldSwapchain = VK_DEVICE->swap_chain;
-	VkResult result = vkCreateSwapchainKHR(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->swap_chain);
+	VkResult result = vkCreateSwapchainKHR(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->swap_chain);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create swapchain: %s (%d)", vk_err2str(result), result);
@@ -397,7 +462,7 @@ static bool create_image_views(gfx_device_t *device)
 		create_info.subresourceRange.levelCount = 1;
 		create_info.subresourceRange.baseArrayLayer = 0;
 		create_info.subresourceRange.layerCount = 1;
-		VkResult result = vkCreateImageView(VK_DEVICE->vk_device, &create_info, NULL, &image_views[i]);
+		VkResult result = vkCreateImageView(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &image_views[i]);
 		if (result != VK_SUCCESS)
 		{
 			GFX_ERROR_CALLBACK("can't allocate image views: %s (%d)", vk_err2str(result), result);
@@ -417,7 +482,7 @@ static bool create_command_pool(gfx_device_t *device)
 	create_info.pNext = NULL;
 	create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	create_info.queueFamilyIndex = 0;
-	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, NULL, &VK_DEVICE->command_pool);
+	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->command_pool);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create vulkan command pool: %s (%d)", vk_err2str(result), result);
@@ -467,13 +532,13 @@ static bool vk_ctr(gfx_device_t *device, gfx_window_t *window)
 static void vk_dtr(gfx_device_t *device)
 {
 	for (uint32_t i = 0; i < VK_DEVICE->surface_image_views_count; ++i)
-		vkDestroyImageView(VK_DEVICE->vk_device, VK_DEVICE->surface_image_views[i], NULL);
+		vkDestroyImageView(VK_DEVICE->vk_device, VK_DEVICE->surface_image_views[i], &VK_DEVICE->allocation_callbacks);
 	vkFreeCommandBuffers(VK_DEVICE->vk_device, VK_DEVICE->command_pool, 1, &VK_DEVICE->command_buffer);
-	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, NULL);
-	vkDestroySwapchainKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, NULL);
-	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, NULL);
-	vkDestroyInstance(VK_DEVICE->instance, NULL);
-	vkDestroyDevice(VK_DEVICE->vk_device, NULL);
+	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, &VK_DEVICE->allocation_callbacks);
+	vkDestroySwapchainKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, &VK_DEVICE->allocation_callbacks);
+	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, &VK_DEVICE->allocation_callbacks);
+	vkDestroyInstance(VK_DEVICE->instance, NULL); /* XXX: allocation callbacks */
+	vkDestroyDevice(VK_DEVICE->vk_device, NULL); /* XXX: allocation callbacks */
 	GFX_FREE(VK_DEVICE->surface_image_views);
 	GFX_FREE(VK_DEVICE->surface_formats);
 	GFX_FREE(VK_DEVICE->surface_images);
@@ -494,12 +559,13 @@ static void vk_clear_color(gfx_device_t *device, const gfx_render_target_t *rend
 	vk_color.float32[2] = color.z;
 	vk_color.float32[3] = color.w;
 	VkImageSubresourceRange range;
-	//range.aspectMask = ;
+	range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	range.baseMipLevel = 0;
-	//range.levelCount = ;
-	//range.baseArrayLayer = ;
-	//range.layerCount = ;
-	//vkCmdClearColorImage(VK_DEVICE->command_buffer, image, image_layout, &vk_color, 1, &range);
+	range.levelCount = 1;
+	range.baseArrayLayer = 0;
+	range.layerCount = 1;
+	for (uint32_t i = 0; i < VK_DEVICE->surface_images_count; ++i)
+		vkCmdClearColorImage(VK_DEVICE->command_buffer, VK_DEVICE->surface_images[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vk_color, 1, &range);
 }
 
 static void vk_clear_depth_stencil(gfx_device_t *device, const gfx_render_target_t *render_target, float depth, uint8_t stencil)
@@ -508,62 +574,160 @@ static void vk_clear_depth_stencil(gfx_device_t *device, const gfx_render_target
 	vk_depth_stencil.depth = depth;
 	vk_depth_stencil.stencil = stencil;
 	VkImageSubresourceRange range;
-	//range.aspectMask = ;
+	range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 	range.baseMipLevel = 0;
-	//range.levelCount = ;
-	//range.baseArrayLayer = ;
-	//range.layerCount = ;
+	range.levelCount = 1;
+	range.baseArrayLayer = 0;
+	range.layerCount = 1;
 	//vkCmdClearDepthStencilImage(VK_DEVICE->command_buffer, image, image_layout, &vk_depth_stencil, 1, &range
 }
 
 static void vk_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	vkCmdDrawIndexed(VK_DEVICE->command_buffer, count, prim_count, offset, 0, 0);
+#ifndef NDEBUG
+	switch (primitive)
+	{
+		case GFX_PRIMITIVE_TRIANGLES:
+			device->triangles_count += count / 3 * prim_count;
+			break;
+		case GFX_PRIMITIVE_POINTS:
+			device->points_count += count * prim_count;
+			break;
+		case GFX_PRIMITIVE_LINES:
+			device->lines_count += count / 2 * prim_count;
+			break;
+	}
+	device->draw_calls_count++;
+#endif
 }
 
 static void vk_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	vkCmdDraw(VK_DEVICE->command_buffer, count, prim_count, offset, 0);
+#ifndef NDEBUG
+	switch (primitive)
+	{
+		case GFX_PRIMITIVE_TRIANGLES:
+			device->triangles_count += count / 3;
+			break;
+		case GFX_PRIMITIVE_POINTS:
+			device->points_count += count;
+			break;
+		case GFX_PRIMITIVE_LINES:
+			device->lines_count += count / 2;
+			break;
+	}
+	device->draw_calls_count++;
+#endif
 }
 
 static void vk_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
 {
 	vkCmdDrawIndexed(VK_DEVICE->command_buffer, count, 1, offset, 0, 0);
+#ifndef NDEBUG
+	switch (primitive)
+	{
+		case GFX_PRIMITIVE_TRIANGLES:
+			device->triangles_count += count / 3;
+			break;
+		case GFX_PRIMITIVE_POINTS:
+			device->points_count += count;
+			break;
+		case GFX_PRIMITIVE_LINES:
+			device->lines_count += count / 2;
+			break;
+	}
+	device->draw_calls_count++;
+#endif
 }
 
 static void vk_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
 {
 	vkCmdDraw(VK_DEVICE->command_buffer, count, 1, offset, 0);
+#ifndef NDEBUG
+	switch (primitive)
+	{
+		case GFX_PRIMITIVE_TRIANGLES:
+			device->triangles_count += count / 3;
+			break;
+		case GFX_PRIMITIVE_POINTS:
+			device->points_count += count;
+			break;
+		case GFX_PRIMITIVE_LINES:
+			device->lines_count += count / 2;
+			break;
+	}
+	device->draw_calls_count++;
+#endif
 }
 
 static bool vk_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
 {
-	//VkPipelineColorBlendStateCreateInfo
+	assert(!state->handle.u64);
+	state->device = device;
+	state->handle.ptr = (void*)1;
+	state->enabled = enabled;
+	state->src_c = src_c;
+	state->dst_c = dst_c;
+	state->src_a = src_a;
+	state->dst_a = dst_a;
+	state->equation_c = equation_c;
+	state->equation_a = equation_a;
 	return true;
 }
 
 static void vk_delete_blend_state(gfx_device_t *device, gfx_blend_state_t *state)
 {
+	(void)device;
+	if (!state || !state->handle.ptr)
+		return;
+	state->handle.ptr = NULL;
 }
 
 static bool vk_create_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass)
 {
-	//VkPipelineDepthStencilStateCreateInfo
+	assert(!state->handle.u64);
+	state->device = device;
+	state->handle.ptr = (void*)1;
+	state->depth_write = depth_write;
+	state->depth_test = depth_test;
+	state->depth_compare = depth_compare;
+	state->stencil_enabled = stencil_enabled;
+	state->stencil_write_mask = stencil_write_mask;
+	state->stencil_compare = stencil_compare;
+	state->stencil_reference = stencil_reference;
+	state->stencil_compare_mask = stencil_compare_mask;
+	state->stencil_fail = stencil_fail;
+	state->stencil_zfail = stencil_zfail;
+	state->stencil_pass = stencil_pass;
 	return true;
 }
 
 static void vk_delete_depth_stencil_state(gfx_device_t *device, gfx_depth_stencil_state_t *state)
 {
+	if (!state || !state->handle.ptr)
+		return;
+	state->handle.ptr = NULL;
 }
 
 static bool vk_create_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state, enum gfx_fill_mode fill_mode, enum gfx_cull_mode cull_mode, enum gfx_front_face front_face, bool scissor)
 {
-	//VkPipelineRasterizationStateCreateInfo
+	assert(!state->handle.ptr);
+	state->device = device;
+	state->handle.ptr = (void*)1;
+	state->fill_mode = fill_mode;
+	state->cull_mode = cull_mode;
+	state->front_face = front_face;
+	state->scissor = scissor;
 	return true;
 }
 
 static void vk_delete_rasterizer_state(gfx_device_t *device, gfx_rasterizer_state_t *state)
 {
+	if (!state || !state->handle.ptr)
+		return;
+	state->handle.ptr = NULL;
 }
 
 static bool vk_create_buffer(gfx_device_t *device, gfx_buffer_t *buffer, enum gfx_buffer_type type, const void *data, uint32_t size, enum gfx_buffer_usage usage)
@@ -581,6 +745,7 @@ static void vk_delete_buffer(gfx_device_t *device, gfx_buffer_t *buffer)
 
 static bool vk_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
 {
+	assert(!state->handle.ptr);
 	//VkPipelineVertexInputStateCreateInfo
 	return true;
 }
@@ -660,21 +825,6 @@ static void vk_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 static bool vk_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
 {
 	assert(!program->handle.ptr);
-	VkPipelineShaderStageCreateInfo vert_info;
-	vert_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vert_info.pNext = NULL;
-	vert_info.flags = 0;
-	vert_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vert_info.module = (VkShaderModule)vertex_shader->handle.ptr;
-	vert_info.pName = "main";
-	VkPipelineShaderStageCreateInfo frag_info;
-	frag_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	frag_info.pNext = NULL;
-	frag_info.flags = 0;
-	frag_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	frag_info.module = (VkShaderModule)fragment_shader->handle.ptr;
-	frag_info.pName = "main";
-	VkPipelineShaderStageCreateInfo shaderStages[] = {vert_info, frag_info};
 	return true;
 }
 
@@ -722,17 +872,169 @@ static void vk_resolve_render_target(gfx_device_t *device, const gfx_render_targ
 
 static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
 {
-	//VkGraphicsPipelineCreateInfo
-	//VkPipeline graphicsPipeline;
-	//vkCreateGraphicsPipelines
+	uint32_t shader_stages_count = 2;
+	VkPipelineShaderStageCreateInfo shader_stages[3];
+	shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shader_stages[0].pNext = NULL;
+	shader_stages[0].flags = 0;
+	shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	shader_stages[0].module = (VkShaderModule)program->vertex_shader.ptr;
+	shader_stages[0].pName = "main";
+	shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shader_stages[1].pNext = NULL;
+	shader_stages[1].flags = 0;
+	shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	shader_stages[1].module = (VkShaderModule)program->fragment_shader.ptr;
+	shader_stages[1].pName = "main";
+	if (program->geometry_shader.ptr)
+	{
+		shader_stages_count++;
+		shader_stages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		shader_stages[2].pNext = NULL;
+		shader_stages[2].flags = 0;
+		shader_stages[2].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		shader_stages[2].module = (VkShaderModule)program->geometry_shader.ptr;
+		shader_stages[2].pName = "main";
+	}
+
+	VkPipelineVertexInputStateCreateInfo vertex_input_create_info;
+	vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertex_input_create_info.pNext = NULL;
+	vertex_input_create_info.flags = 0;
+	vertex_input_create_info.vertexBindingDescriptionCount = ;
+	vertex_input_create_info.pVertexBindingDescriptions = ;
+	vertex_input_create_info.vertexAttributeDescriptionCount = ;
+	vertex_input_create_info.pVertexAttributeDescriptions = ;
+
+	VkPipelineRasterizationStateCreateInfo rasterization_create_info;
+	rasterization_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterization_create_info.pNext = NULL;
+	rasterization_create_info.flags = 0;
+	rasterization_create_info.depthClampEnable = VK_TRUE;
+	rasterization_create_info.rasterizerDiscardEnable = VK_TRUE;
+	rasterization_create_info.polygonMode = fill_modes[rasterizer->fill_mode];
+	rasterization_create_info.cullMode = cull_modes[rasterizer->cull_mode];
+	rasterization_create_info.frontFace = front_faces[rasterizer->front_face];
+	rasterization_create_info.depthBiasEnable = VK_FALSE;
+	rasterization_create_info.depthBiasConstantFactor = 0;
+	rasterization_create_info.depthBiasClamp = 0;
+	rasterization_create_info.depthBiasSlopeFactor = 0;
+	rasterization_create_info.lineWidth = 1;
+
+	VkPipelineMultisampleStateCreateInfo multisample_create_info;
+	multisample_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisample_create_info.pNext = NULL;
+	multisample_create_info.flags = 0;
+	multisample_create_info.rasterizationSamples = ;
+	multisample_create_info.sampleShadingEnable = ;
+	multisample_create_info.minSampleShading = ;
+	multisample_create_info.pSampleMask = ;
+	multisample_create_info.alphaToCoverageEnable = ;
+	multisample_create_info.alphaToOneEnable = ;
+
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_create_info;
+	depth_stencil_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depth_stencil_create_info.pNext = NULL;
+	depth_stencil_create_info.flags = 0;
+	depth_stencil_create_info.depthTestEnable = depth_stencil->depth_test;
+	depth_stencil_create_info.depthWriteEnable = depth_stencil->depth_write;
+	depth_stencil_create_info.depthCompareOp = compare_functions[depth_stencil->depth_compare];
+	depth_stencil_create_info.depthBoundsTestEnable = VK_TRUE;
+	depth_stencil_create_info.stencilTestEnable = depth_stencil->stencil_enabled;
+	depth_stencil_create_info.front.failOp = stencil_operations[depth_stencil->stencil_fail];
+	depth_stencil_create_info.front.passOp = stencil_operations[depth_stencil->stencil_pass];
+	depth_stencil_create_info.front.depthFailOp = stencil_operations[depth_stencil->stencil_zfail];
+	depth_stencil_create_info.front.compareOp = compare_functions[depth_stencil->stencil_compare];
+	depth_stencil_create_info.front.compareMask = depth_stencil->stencil_compare_mask;
+	depth_stencil_create_info.front.writeMask = depth_stencil->stencil_write_mask;
+	depth_stencil_create_info.front.reference = depth_stencil->stencil_reference;
+	depth_stencil_create_info.back.failOp = stencil_operations[depth_stencil->stencil_fail];
+	depth_stencil_create_info.back.passOp = stencil_operations[depth_stencil->stencil_pass];
+	depth_stencil_create_info.back.depthFailOp = stencil_operations[depth_stencil->stencil_zfail];
+	depth_stencil_create_info.back.compareOp = compare_functions[depth_stencil->stencil_compare];
+	depth_stencil_create_info.back.compareMask = depth_stencil->stencil_compare_mask;
+	depth_stencil_create_info.back.writeMask = depth_stencil->stencil_write_mask;
+	depth_stencil_create_info.back.reference = depth_stencil->stencil_reference;
+	depth_stencil_create_info.minDepthBounds = 0;
+	depth_stencil_create_info.maxDepthBounds = 1;
+
+	VkPipelineColorBlendAttachmentState color_blend_attachment;
+	color_blend_attachment.blendEnable = blend->enabled;
+	color_blend_attachment.srcColorBlendFactor = blend_functions[blend->src_c];
+	color_blend_attachment.dstColorBlendFactor = blend_functions[blend->dst_c];
+	color_blend_attachment.colorBlendOp = blend_equations[blend->equation_c];
+	color_blend_attachment.srcAlphaBlendFactor = blend_functions[blend->src_a];
+	color_blend_attachment.dstAlphaBlendFactor = blend_functions[blend->dst_a];
+	color_blend_attachment.alphaBlendOp = blend_equations[blend->equation_a];
+	color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+	VkPipelineColorBlendStateCreateInfo color_blend_create_info;
+	color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	color_blend_create_info.pNext = NULL;
+	color_blend_create_info.flags = 0;
+	color_blend_create_info.logicOpEnable = VK_FALSE;
+	color_blend_create_info.logicOp = 0;
+	color_blend_create_info.attachmentCount = 1;
+	color_blend_create_info.pAttachments = &color_blend_attachment;
+	color_blend_create_info.blendConstants[0] = 1;
+	color_blend_create_info.blendConstants[1] = 1;
+	color_blend_create_info.blendConstants[2] = 1;
+	color_blend_create_info.blendConstants[3] = 1;
+
+	VkDynamicState dynamic_states[] =
+	{
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR,
+		VK_DYNAMIC_STATE_LINE_WIDTH,
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info;
+	dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamic_state_create_info.pNext = NULL;
+	dynamic_state_create_info.flags = 0;
+	dynamic_state_create_info.dynamicStateCount = sizeof(dynamic_states) / sizeof(*dynamic_states);
+	dynamic_state_create_info.pDynamicStates = dynamic_states;
+
+	VkGraphicsPipelineCreateInfo create_info;
+	create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	create_info.pNext = NULL;
+	create_info.flags = 0;
+	create_info.stageCount = shader_stages_count;
+	create_info.pStages = shader_stages;
+	create_info.pVertexInputState = &vertex_input_create_info;
+	create_info.pTessellationState = NULL;
+	create_info.pViewportState = NULL;
+	create_info.pRasterizationState = &rasterization_create_info;
+	create_info.pMultisampleState = &multisample_create_info;
+	create_info.pDepthStencilState = &depth_stencil_create_info;
+	create_info.pColorBlendState = &color_blend_create_info;
+	create_info.pDynamicState = &dynamic_state_create_info;
+	create_info.layout = ;
+	create_info.renderPass = ;
+	create_info.subpass = ;
+	create_info.basePipelineHandle = VK_NULL_HANDLE;
+	create_info.basePipelineIndex = -1;
+	VkResult result = vkCreateGraphicsPipelines(VK_DEVICE->vk_device, cache, 1, &create_info, NULL, (VkPipeline*)&state->handle.ptr);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't create graphics pipeline: %s (%d)", vk_err2str(result), result);
+		return false;
+	}
+	return true;
 }
 
 static void vk_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state)
 {
+	if (!state || !state->handle.ptr)
+		return;
+	vkDestroyPipeline(VK_DEVICE->vk_device, (VkPipeline)state->handle.ptr, NULL);
+	state->handle.ptr = NULL;
 }
 
 static void vk_bind_pipeline_state(gfx_device_t *device, const gfx_pipeline_state_t *state)
 {
+	assert(state);
+	vkCmdBindPipeline(VK_DEVICE->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)state->handle.ptr);
 }
 
 static void vk_set_viewport(gfx_device_t *device, int32_t x, int32_t y, uint32_t width, uint32_t height)
@@ -771,7 +1073,7 @@ static void vk_set_point_size(gfx_device_t *device, float point_size)
 	(void)point_size;
 }
 
-static gfx_device_vtable_t vk_vtable =
+static const gfx_device_vtable_t vk_vtable =
 {
 	GFX_DEVICE_VTABLE_DEF(vk)
 };
@@ -793,12 +1095,38 @@ void gfx_vk_swap_buffers(gfx_device_t *device)
 	//vkQueuePresentKHR
 }
 
+static void *vk_allocation(void *userdata, size_t size, size_t alignment, VkSystemAllocationScope scope)
+{
+}
+
+static void *vk_realloaction(void *userdata, void *original, size_t size, size_t alignment, VkSystemAllocationScope scope)
+{
+}
+
+static void vk_free(void *userdata, void *memory)
+{
+}
+
+static void vk_internal_allocation(void *userdata, size_t size, VkInternalAllocationType type, VkSystemAllocationScope scope)
+{
+}
+
+static void vk_internal_free(void *userdata, size_t size, VkInternalAllocationType type, VkSystemAllocationScope scope)
+{
+}
+
 gfx_device_t *gfx_vk_device_new(gfx_window_t *window, VkInstance instance, VkSurfaceKHR surface)
 {
 	gfx_vk_device_t *device = GFX_MALLOC(sizeof(*device));
 	if (!device)
 		return NULL;
 	memset(device, 0, sizeof(*device));
+	device->allocation_callbacks.pUserData = NULL;
+	device->allocation_callbacks.pfnAllocation = vk_allocation;
+	device->allocation_callbacks.pfnReallocation = vk_realloaction;
+	device->allocation_callbacks.pfnFree = vk_free;
+	device->allocation_callbacks.pfnInternalAllocation = vk_internal_allocation;
+	device->allocation_callbacks.pfnInternalFree = vk_internal_free;
 	gfx_device_t *dev = &device->device;
 	dev->vtable = &vk_vtable;
 	device->instance = instance;

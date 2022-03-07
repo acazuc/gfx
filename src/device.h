@@ -16,7 +16,7 @@ typedef struct gfx_window_s gfx_window_t;
 
 struct gfx_device_s
 {
-	gfx_device_vtable_t *vtable;
+	const gfx_device_vtable_t *vtable;
 	gfx_window_t *window;
 	uint32_t draw_calls_count;
 	uint32_t triangles_count;

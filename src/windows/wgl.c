@@ -7,8 +7,6 @@
 #include <GL/gl.h>
 #include <GL/wglext.h>
 
-extern gfx_window_vtable_t gfx_window_vtable;
-
 typedef struct gfx_wgl_window_s
 {
 	gfx_gl_window_t gl;
@@ -149,7 +147,7 @@ static void wgl_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y)
 	gfx_win32_set_mouse_position(WIN32_WINDOW, x, y);
 }
 
-static gfx_window_vtable_t wgl_vtable =
+static const gfx_window_vtable_t wgl_vtable =
 {
 	GFX_WINDOW_VTABLE_DEF(wgl)
 };

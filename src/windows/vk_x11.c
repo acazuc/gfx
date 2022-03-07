@@ -7,8 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern gfx_window_vtable_t gfx_window_vtable;
-
 typedef struct gfx_vk_x11_window_s
 {
 	gfx_window_t window;
@@ -189,7 +187,7 @@ static void vk_x11_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y
 	gfx_x11_set_mouse_position(X11_WINDOW, x, y);
 }
 
-static gfx_window_vtable_t vk_x11_vtable =
+static const gfx_window_vtable_t vk_x11_vtable =
 {
 	GFX_WINDOW_VTABLE_DEF(vk_x11)
 };
