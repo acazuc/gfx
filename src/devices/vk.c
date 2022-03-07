@@ -102,6 +102,13 @@ static const VkStencilOp stencil_operations[] =
 	VK_STENCIL_OP_INVERT,
 };
 
+static const VkPrimitiveTopology primitive_types[] =
+{
+	VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+	VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+};
+
 static const VkPolygonMode fill_modes[] =
 {
 	VK_POLYGON_MODE_POINT,
@@ -991,6 +998,13 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	vertex_input_create_info.vertexAttributeDescriptionCount = input_layout->count;
 	vertex_input_create_info.pVertexAttributeDescriptions = input_attribute_descriptions;
 
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info;
+	input_assembly_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	input_assembly_create_info.pNext = NULL;
+	input_assembly_create_info.flags = 0;
+	input_assembly_create_info.topology = primitive_types[primitive];
+	input_assembly_create_info.primitiveRestartEnable = VK_FALSE;
+
 	VkPipelineRasterizationStateCreateInfo rasterization_create_info;
 	rasterization_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterization_create_info.pNext = NULL;
@@ -1087,6 +1101,7 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	create_info.stageCount = shader_stages_count;
 	create_info.pStages = shader_stages;
 	create_info.pVertexInputState = &vertex_input_create_info;
+	create_info.pInputAssemblyState = &input_assembly_create_info;
 	create_info.pTessellationState = NULL;
 	create_info.pViewportState = NULL;
 	create_info.pRasterizationState = &rasterization_create_info;
