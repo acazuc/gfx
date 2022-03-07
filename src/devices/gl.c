@@ -15,47 +15,209 @@
 # define GL_R 0x2002
 #endif
 
-const GLuint gfx_gl_primitives[3] = {GL_TRIANGLES, GL_POINTS, GL_LINES};
+const GLuint gfx_gl_primitives[3] =
+{
+	GL_TRIANGLES,
+	GL_POINTS,
+	GL_LINES,
+};
 
-const GLenum gfx_gl_index_types[2] = {GL_UNSIGNED_SHORT, GL_UNSIGNED_INT};
+const GLenum gfx_gl_index_types[2] =
+{
+	GL_UNSIGNED_SHORT,
+	GL_UNSIGNED_INT,
+};
 
-const GLenum gfx_gl_compare_functions[8] = {GL_NEVER, GL_LESS, GL_LEQUAL, GL_EQUAL, GL_GEQUAL, GL_GREATER, GL_NOTEQUAL, GL_ALWAYS};
+const GLenum gfx_gl_compare_functions[8] =
+{
+	GL_NEVER,
+	GL_LESS,
+	GL_LEQUAL,
+	GL_EQUAL,
+	GL_GEQUAL,
+	GL_GREATER,
+	GL_NOTEQUAL,
+	GL_ALWAYS,
+};
 
-const GLenum gfx_gl_blend_functions[12] = {GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR};
+const GLenum gfx_gl_blend_functions[12] =
+{
+	GL_ZERO,
+	GL_ONE,
+	GL_SRC_COLOR,
+	GL_ONE_MINUS_SRC_COLOR,
+	GL_DST_COLOR,
+	GL_ONE_MINUS_DST_COLOR,
+	GL_SRC_ALPHA,
+	GL_ONE_MINUS_SRC_ALPHA,
+	GL_DST_ALPHA,
+	GL_ONE_MINUS_DST_ALPHA,
+	GL_CONSTANT_COLOR,
+	GL_ONE_MINUS_CONSTANT_COLOR,
+};
 
-const GLenum gfx_gl_blend_equations[5] = {GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX};
+const GLenum gfx_gl_blend_equations[5] =
+{
+	GL_FUNC_ADD,
+	GL_FUNC_SUBTRACT,
+	GL_FUNC_REVERSE_SUBTRACT,
+	GL_MIN,
+	GL_MAX,
+};
 
-const GLenum gfx_gl_stencil_operations[8] = {GL_KEEP, GL_ZERO, GL_REPLACE, GL_INCR, GL_INCR_WRAP, GL_DECR, GL_DECR_WRAP, GL_INVERT};
+const GLenum gfx_gl_stencil_operations[8] =
+{
+	GL_KEEP,
+	GL_ZERO,
+	GL_REPLACE,
+	GL_INCR,
+	GL_INCR_WRAP,
+	GL_DECR,
+	GL_DECR_WRAP,
+	GL_INVERT,
+};
 
-const GLenum gfx_gl_fill_modes[3] = {GL_POINT, GL_LINE, GL_FILL};
+const GLenum gfx_gl_fill_modes[3] =
+{
+	GL_POINT,
+	GL_LINE,
+	GL_FILL,
+};
 
-const GLenum gfx_gl_front_faces[2] = {GL_CW, GL_CCW};
+const GLenum gfx_gl_front_faces[2] 
+{
+	GL_CW,
+	GL_CCW,
+};
 
-const GLenum gfx_gl_cull_modes[3] = {GL_BACK, GL_FRONT, GL_BACK};
+const GLenum gfx_gl_cull_modes[3] =
+{
+	GL_BACK,
+	GL_FRONT,
+	GL_BACK,
+};
 
-const GLenum gfx_gl_shader_types[3] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_GEOMETRY_SHADER};
+const GLenum gfx_gl_shader_types[3] =
+{
+	GL_VERTEX_SHADER,
+	GL_FRAGMENT_SHADER,
+	GL_GEOMETRY_SHADER,
+};
 
-const GLenum gfx_gl_buffer_types[3] = {GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_UNIFORM_BUFFER};
+const GLenum gfx_gl_buffer_types[3] =
+{
+	GL_ARRAY_BUFFER,
+	GL_ELEMENT_ARRAY_BUFFER,
+	GL_UNIFORM_BUFFER,
+};
 
-const GLenum gfx_gl_texture_types[5] = {GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, GL_TEXTURE_3D};
+const GLenum gfx_gl_texture_types[5] =
+{
+	GL_TEXTURE_2D,
+	GL_TEXTURE_2D_MULTISAMPLE,
+	GL_TEXTURE_2D_ARRAY,
+	GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+	GL_TEXTURE_3D,
+};
 
-const GLenum gfx_gl_texture_addressings[5] = {GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_BORDER, GL_MIRROR_CLAMP_TO_EDGE};
+const GLenum gfx_gl_texture_addressings[5] =
+{
+	GL_CLAMP_TO_EDGE,
+	GL_REPEAT,
+	GL_MIRRORED_REPEAT,
+	GL_CLAMP_TO_BORDER,
+	GL_MIRROR_CLAMP_TO_EDGE,
+};
 
-const GLenum gfx_gl_mag_filterings[3] = {GL_NEAREST, GL_NEAREST, GL_LINEAR};
+const GLenum gfx_gl_mag_filterings[3] =
+{
+	GL_NEAREST,
+	GL_NEAREST,
+	GL_LINEAR,
+};
 
-const GLenum gfx_gl_min_filterings[9] = {GL_NEAREST, GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR};
+const GLenum gfx_gl_min_filterings[9] =
+{
+	GL_NEAREST,
+	GL_NEAREST,
+	GL_LINEAR,
+	GL_NEAREST_MIPMAP_NEAREST,
+	GL_NEAREST_MIPMAP_NEAREST,
+	GL_LINEAR_MIPMAP_NEAREST,
+	GL_NEAREST_MIPMAP_LINEAR,
+	GL_NEAREST_MIPMAP_LINEAR,
+	GL_LINEAR_MIPMAP_LINEAR,
+};
 
-const GLenum gfx_gl_buffer_usages[4] = {GL_STATIC_DRAW, GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW};
+const GLenum gfx_gl_buffer_usages[4] =
+{
+	GL_STATIC_DRAW,
+	GL_STATIC_DRAW,
+	GL_DYNAMIC_DRAW,
+	GL_STREAM_DRAW,
+};
 
-const GLenum gfx_gl_render_target_attachments[6] = {GL_NONE, GL_NONE, GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+const GLenum gfx_gl_render_target_attachments[6] =
+{
+	GL_NONE,
+	GL_NONE,
+	GL_COLOR_ATTACHMENT0,
+	GL_COLOR_ATTACHMENT1,
+	GL_COLOR_ATTACHMENT2,
+	GL_COLOR_ATTACHMENT3,
+};
 
-const GLenum gfx_gl_internal_formats[14] = {GL_DEPTH24_STENCIL8, GL_RGBA32F, GL_RGBA16F, GL_RGB32F, GL_RGBA8, GL_RGB5_A1, GL_RGBA4, GL_RGB, GL_RG8, GL_R8, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT};
+const GLenum gfx_gl_internal_formats[14] =
+{
+	GL_DEPTH24_STENCIL8,
+	GL_RGBA32F,
+	GL_RGBA16F,
+	GL_RGB32F,
+	GL_RGBA8,
+	GL_RGB5_A1,
+	GL_RGBA4,
+	GL_RGB,
+	GL_RG8,
+	GL_R8,
+	GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+};
 
-const GLenum gfx_gl_formats[10] = {GL_DEPTH_STENCIL, GL_BGRA, GL_BGRA, GL_RGB, GL_BGRA, GL_BGRA, GL_BGRA, GL_RGB, GL_RG, GL_RED};
+const GLenum gfx_gl_formats[10] =
+{
+	GL_DEPTH_STENCIL,
+	GL_BGRA,
+	GL_BGRA,
+	GL_RGB,
+	GL_BGRA,
+	GL_BGRA,
+	GL_BGRA,
+	GL_RGB,
+	GL_RG,
+	GL_RED,
+};
 
-const GLenum gfx_gl_format_types[10] = {GL_UNSIGNED_INT_24_8, GL_FLOAT, GL_UNSIGNED_BYTE, GL_FLOAT, GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_BYTE, GL_UNSIGNED_BYTE};
+const GLenum gfx_gl_format_types[10] =
+{
+	GL_UNSIGNED_INT_24_8,
+	GL_FLOAT,
+	GL_UNSIGNED_BYTE,
+	GL_FLOAT,
+	GL_UNSIGNED_INT_8_8_8_8_REV,
+	GL_UNSIGNED_SHORT_1_5_5_5_REV,
+	GL_UNSIGNED_SHORT_4_4_4_4_REV,
+	GL_UNSIGNED_SHORT_5_6_5_REV,
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_BYTE,
+};
 
-const GLint gfx_gl_index_sizes[2] = {2, 4};
+const GLint gfx_gl_index_sizes[2] =
+{
+	2,
+	4,
+};
 
 const bool gfx_gl_attribute_normalized[34] =
 {
