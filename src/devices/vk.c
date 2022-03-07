@@ -9,6 +9,50 @@
 
 #define VK_DEVICE ((gfx_vk_device_t*)device)
 
+static const VkFormat attribute_types[] =
+{
+	VK_FORMAT_R32G32B32A32_SFLOAT,
+	VK_FORMAT_R32G32B32A32_UINT,
+	VK_FORMAT_R32G32B32A32_SINT,
+	VK_FORMAT_R32G32B32_SFLOAT,
+	VK_FORMAT_R32G32B32_UINT,
+	VK_FORMAT_R32G32B32_SINT,
+	VK_FORMAT_R32G32_SFLOAT,
+	VK_FORMAT_R32G32_UINT,
+	VK_FORMAT_R32G32_SINT,
+	VK_FORMAT_R32_SFLOAT,
+	VK_FORMAT_R32_UINT,
+	VK_FORMAT_R32_SINT,
+	VK_FORMAT_R16G16B16A16_SFLOAT,
+	VK_FORMAT_R16G16B16A16_UNORM,
+	VK_FORMAT_R16G16B16A16_SNORM,
+	VK_FORMAT_R16G16B16A16_UINT,
+	VK_FORMAT_R16G16B16A16_SINT,
+	VK_FORMAT_R16G16_SFLOAT,
+	VK_FORMAT_R16G16_UNORM,
+	VK_FORMAT_R16G16_SNORM,
+	VK_FORMAT_R16G16_UINT,
+	VK_FORMAT_R16G16_SINT,
+	VK_FORMAT_R8G8B8A8_UNORM,
+	VK_FORMAT_R8G8B8A8_SNORM,
+	VK_FORMAT_R8G8B8A8_UINT,
+	VK_FORMAT_R8G8B8A8_SINT,
+	VK_FORMAT_R8G8_UNORM,
+	VK_FORMAT_R8G8_SNORM,
+	VK_FORMAT_R8G8_UINT,
+	VK_FORMAT_R8G8_SINT,
+	VK_FORMAT_R8_UNORM,
+	VK_FORMAT_R8_SNORM,
+	VK_FORMAT_R8_UINT,
+	VK_FORMAT_R8_SINT,
+};
+
+static const VkIndexType index_types[] =
+{
+	VK_INDEX_TYPE_UINT16,
+	VK_INDEX_TYPE_UINT32,
+};
+
 static const VkCompareOp compare_functions[] =
 {
 	VK_COMPARE_OP_NEVER,
@@ -746,25 +790,53 @@ static void vk_delete_buffer(gfx_device_t *device, gfx_buffer_t *buffer)
 static bool vk_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state, const gfx_attribute_bind_t *binds, uint32_t count, const gfx_buffer_t *index_buffer, enum gfx_index_type index_type)
 {
 	assert(!state->handle.ptr);
-	//VkPipelineVertexInputStateCreateInfo
+	state->handle.ptr = (void*)1;
+	memcpy(state->binds, binds, sizeof(*binds) * count);
+	state->count = count;
+	state->index_type = index_type;
+	state->index_buffer = index_buffer;
 	return true;
 }
 
 static void vk_bind_attributes_state(gfx_device_t *device, const gfx_attributes_state_t *state, const gfx_input_layout_t *input_layout)
 {
+	assert(state->handle.ptr);
+	VkBuffer buffers[8];
+	VkDeviceSize offsets[8];
+	for (uint32_t i = 0; i < state->count; ++i)
+	{
+		buffers[i] = state->binds[i].buffer->handle.ptr;
+		offsets[i] = state->binds[i].offset;
+	}
+	vkCmdBindVertexBuffers(VK_DEVICE->command_buffer, 0, state->count, buffers, offsets);
+	if (state->index_buffer)
+		vkCmdBindIndexBuffer(VK_DEVICE->command_buffer, state->index_buffer->handle.ptr, 0, index_types[state->index_type]);
 }
 
 static void vk_delete_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state)
 {
+	if (!state || !state->handle.ptr)
+		return;
+	state->handle.ptr = NULL;
 }
 
 static bool vk_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
 {
+	(void)program;
+	assert(!input_layout->handle.ptr);
+	input_layout->handle.ptr = (void*)1;
+	input_layout->device = device;
+	memcpy(input_layout->binds, binds, sizeof(*binds) * count);
+	input_layout->count = count;
 	return true;
 }
 
 static void vk_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout)
 {
+	(void)device;
+	if (!input_layout || !input_layout->handle.u64)
+		return;
+	input_layout->handle.u64 = 0;
 }
 
 static bool vk_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth)
@@ -897,14 +969,27 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 		shader_stages[2].pName = "main";
 	}
 
+	VkVertexInputAttributeDescription input_attribute_descriptions[8];
+	VkVertexInputBindingDescription input_binding_descriptions[8];
+	for (uint32_t i = 0; i < input_layout->count; ++i)
+	{
+		input_attribute_descriptions[i].location = i;
+		input_attribute_descriptions[i].binding = i;
+		input_attribute_descriptions[i].format = attribute_types[input_layout->binds[i].type];
+		input_attribute_descriptions[i].offset = input_layout->binds[i].offset;
+		input_binding_descriptions[i].binding = i;
+		input_binding_descriptions[i].stride = input_layout->binds[i].stride;
+		input_binding_descriptions[i].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	}
+
 	VkPipelineVertexInputStateCreateInfo vertex_input_create_info;
 	vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertex_input_create_info.pNext = NULL;
 	vertex_input_create_info.flags = 0;
-	vertex_input_create_info.vertexBindingDescriptionCount = ;
-	vertex_input_create_info.pVertexBindingDescriptions = ;
-	vertex_input_create_info.vertexAttributeDescriptionCount = ;
-	vertex_input_create_info.pVertexAttributeDescriptions = ;
+	vertex_input_create_info.vertexBindingDescriptionCount = input_layout->count;
+	vertex_input_create_info.pVertexBindingDescriptions = input_binding_descriptions;
+	vertex_input_create_info.vertexAttributeDescriptionCount = input_layout->count;
+	vertex_input_create_info.pVertexAttributeDescriptions = input_attribute_descriptions;
 
 	VkPipelineRasterizationStateCreateInfo rasterization_create_info;
 	rasterization_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
