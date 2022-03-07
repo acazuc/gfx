@@ -19,6 +19,32 @@
 
 DEFINE_GUID(UIID_ID3D11Texture2D, 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c);
 
+static inline const char *d3d11_err2str(HRESULT result)
+{
+#define TEST_ERR(code) \
+	case code: \
+		return #code; \
+
+	switch (result)
+	{
+		/*TEST_ERR(D3D11_ERROR_FILE_NOT_FOUND)
+		TEST_ERR(D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS)
+		TEST_ERR(D3D11_ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS)
+		TEST_ERR(D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD)*/
+		TEST_ERR(D3DERR_INVALIDCALL)
+		TEST_ERR(D3DERR_WASSTILLDRAWING)
+		TEST_ERR(E_FAIL)
+		TEST_ERR(E_INVALIDARG)
+		TEST_ERR(E_OUTOFMEMORY)
+		TEST_ERR(E_NOTIMPL)
+		TEST_ERR(S_FALSE)
+		TEST_ERR(S_OK)
+	}
+
+	return "unknown error";
+#undef TEST_ERR
+}
+
 static inline UINT D3D11CalcSubresource(UINT MipSlice, UINT ArraySlice, UINT MipLevels)
 {
 	return MipSlice + ArraySlice * MipLevels;
@@ -118,34 +144,7 @@ do \
 
 static void d3d11_errors(uint32_t err, const char *fn, const char *file, int line)
 {
-#define TEST_ERR(code) \
-	case code: \
-		out = #code; \
-		break;
-
-	char buf[256];
-	const char *out;
-	switch (err)
-	{
-		/*TEST_ERR(D3D11_ERROR_FILE_NOT_FOUND)
-		TEST_ERR(D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS)
-		TEST_ERR(D3D11_ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS)
-		TEST_ERR(D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD)*/
-		TEST_ERR(D3DERR_INVALIDCALL)
-		TEST_ERR(D3DERR_WASSTILLDRAWING);
-		TEST_ERR(E_FAIL)
-		TEST_ERR(E_INVALIDARG)
-		TEST_ERR(E_OUTOFMEMORY)
-		TEST_ERR(E_NOTIMPL)
-		TEST_ERR(S_FALSE)
-		default:
-			snprintf(buf, sizeof(buf), "unknown error: %" PRIu32, err);
-			out = buf;
-			break;
-	}
-	GFX_ERROR_CALLBACK("%s@%s:%d %s", fn, file, line, out);
-
-#undef TEST_ERR
+	GFX_ERROR_CALLBACK("%s@%s:%d %s", fn, file, line, d3d11_err2str(err));
 }
 
 static bool create_default_render_target_view(gfx_device_t *device)
@@ -187,18 +186,20 @@ static bool create_default_depth_stencil_view(gfx_device_t *device)
 	tex_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	tex_desc.CPUAccessFlags = 0;
 	tex_desc.MiscFlags = 0;
-	if (FAILED(ID3D11Device_CreateTexture2D(D3D11_DEVICE->d3ddev, &tex_desc, NULL, &depth_stencil_buffer)))
+	HRESULT result = ID3D11Device_CreateTexture2D(D3D11_DEVICE->d3ddev, &tex_desc, NULL, &depth_stencil_buffer);
+	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create default depth stencil texture");
+		GFX_ERROR_CALLBACK("failed to create default depth stencil texture: %s (%d)", d3d11_err2str(result), result);
 		goto err;
 	}
 
 	memset(&view_desc, 0, sizeof(view_desc));
 	view_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	if (FAILED(ID3D11Device_CreateDepthStencilView(D3D11_DEVICE->d3ddev, (ID3D11Resource*)depth_stencil_buffer, &view_desc, &D3D11_DEVICE->default_depth_stencil_view)))
+	result = ID3D11Device_CreateDepthStencilView(D3D11_DEVICE->d3ddev, (ID3D11Resource*)depth_stencil_buffer, &view_desc, &D3D11_DEVICE->default_depth_stencil_view);
+	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create default depth stencil view");
+		GFX_ERROR_CALLBACK("failed to create default depth stencil view: %s (%d)", d3d11_err2str(result), result);
 		goto err;
 	}
 	ID3D11Texture2D_Release(depth_stencil_buffer);
@@ -1199,9 +1200,10 @@ gfx_device_t *gfx_d3d11_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *s
 #ifndef NDEBUG
 	creation_flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-	if (FAILED(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flags, &feature_level, 1, D3D11_SDK_VERSION, swap_chain_desc, swap_chain, (ID3D11Device**)&device->d3ddev, NULL, (ID3D11DeviceContext**)&device->d3dctx)))
+	HRESULT result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flags, &feature_level, 1, D3D11_SDK_VERSION, swap_chain_desc, swap_chain, (ID3D11Device**)&device->d3ddev, NULL, (ID3D11DeviceContext**)&device->d3dctx);
+	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create d3d device");
+		GFX_ERROR_CALLBACK("failed to create d3d device: %s (%d)", d3d11_err2str(result), result);
 		goto err;
 	}
 	device->swap_chain = *swap_chain;

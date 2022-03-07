@@ -200,7 +200,7 @@ static const char *vk_err2str(VkResult result)
 		TEST_ERR(VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT)
 	}
 
-	return "Unknown error";
+	return "unknown error";
 #undef TEST_ERR
 }
 
