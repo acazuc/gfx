@@ -332,9 +332,9 @@ typedef struct gfx_shader_s
 	uint32_t code_size;
 } gfx_shader_t;
 
-#define GFX_PROGRAM_INIT() (gfx_program_t){.handle = GFX_HANDLE_INIT}
+#define GFX_SHADER_STATE_INIT() (gfx_shader_state_t){.handle = GFX_HANDLE_INIT}
 
-typedef struct gfx_program_s
+typedef struct gfx_shader_state_s
 {
 	gfx_device_t *device;
 	gfx_native_handle_t handle;
@@ -343,7 +343,8 @@ typedef struct gfx_program_s
 	gfx_native_handle_t geometry_shader;
 	uint8_t *code;
 	uint32_t code_size;
-} gfx_program_t;
+	gfx_native_handle_t pipeline_layout;
+} gfx_shader_state_t;
 
 #define GFX_ATTRIBUTES_STATE_INIT() (gfx_attributes_state_t){.handle = GFX_HANDLE_INIT}
 
@@ -364,23 +365,23 @@ typedef struct gfx_attributes_state_s
 	const gfx_buffer_t *index_buffer;
 } gfx_attributes_state_t;
 
-typedef struct gfx_program_attribute_s
+typedef struct gfx_shader_attribute_s
 {
 	const char *name;
 	uint32_t bind;
-} gfx_program_attribute_t;
+} gfx_shader_attribute_t;
 
-typedef struct gfx_program_constant_s
+typedef struct gfx_shader_constant_s
 {
 	const char *name;
 	uint32_t bind;
-} gfx_program_constant_t;
+} gfx_shader_constant_t;
 
-typedef struct gfx_program_sampler_s
+typedef struct gfx_shader_sampler_s
 {
 	const char *name;
 	uint32_t bind;
-} gfx_program_sampler_t;
+} gfx_shader_sampler_t;
 
 typedef struct gfx_rasterizer_state_s
 {
@@ -415,11 +416,12 @@ typedef struct gfx_pipeline_state_s
 {
 	gfx_device_t *device;
 	gfx_native_handle_t handle;
-	const gfx_program_t *program;
+	const gfx_shader_state_t *shader_state;
 	const gfx_rasterizer_state_t *rasterizer_state;
 	const gfx_depth_stencil_state_t *depth_stencil_state;
 	const gfx_blend_state_t *blend_state;
 	const gfx_input_layout_t *input_layout;
+	enum gfx_primitive_type primitive;
 } gfx_pipeline_state_t;
 
 #define GFX_PIPELINE_STATE_INIT() (gfx_pipeline_state_t){.handle = GFX_HANDLE_INIT}

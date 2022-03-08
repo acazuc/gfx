@@ -96,6 +96,7 @@ typedef struct gfx_gl3_device_s
 	PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC CompressedTexSubImage3D;
 	PFNGLTEXIMAGE2DMULTISAMPLEPROC TexImage2DMultisample;
 	PFNGLTEXIMAGE3DMULTISAMPLEPROC TexImage3DMultisample;
+	enum gfx_primitive_type primitive;
 } gfx_gl3_device_t;
 
 static void gl_active_texture(gfx_device_t *device, uint32_t bind)
@@ -224,11 +225,11 @@ static void gl3_clear_depth_stencil(gfx_device_t *device, const gfx_render_targe
 	GL3_CALL(ClearBufferfi, GL_DEPTH_STENCIL, 0, depth, stencil);
 }
 
-static void gl3_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void gl3_draw_indexed_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
-	GL3_CALL(DrawElementsInstanced, gfx_gl_primitives[primitive], count, gfx_gl_index_types[GL_DEVICE->attributes_state->index_type], (void*)(intptr_t)(offset * gfx_gl_index_sizes[GL_DEVICE->attributes_state->index_type]), prim_count);
+	GL3_CALL(DrawElementsInstanced, gfx_gl_primitives[GL3_DEVICE->primitive], count, gfx_gl_index_types[GL_DEVICE->attributes_state->index_type], (void*)(intptr_t)(offset * gfx_gl_index_sizes[GL_DEVICE->attributes_state->index_type]), prim_count);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (GL3_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3 * prim_count;
@@ -244,11 +245,11 @@ static void gl3_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_
 #endif
 }
 
-static void gl3_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void gl3_draw_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
-	GL3_CALL(DrawArraysInstanced, gfx_gl_primitives[primitive], offset, count, prim_count);
+	GL3_CALL(DrawArraysInstanced, gfx_gl_primitives[GL3_DEVICE->primitive], offset, count, prim_count);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (GL3_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -264,11 +265,11 @@ static void gl3_draw_instanced(gfx_device_t *device, enum gfx_primitive_type pri
 #endif
 }
 
-static void gl3_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void gl3_draw_indexed(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
-	GL3_CALL(DrawElements, gfx_gl_primitives[primitive], count, gfx_gl_index_types[GL_DEVICE->attributes_state->index_type], (void*)(intptr_t)(offset * gfx_gl_index_sizes[GL_DEVICE->attributes_state->index_type]));
+	GL3_CALL(DrawElements, gfx_gl_primitives[GL3_DEVICE->primitive], count, gfx_gl_index_types[GL_DEVICE->attributes_state->index_type], (void*)(intptr_t)(offset * gfx_gl_index_sizes[GL_DEVICE->attributes_state->index_type]));
 #ifndef NDEBUG
-	switch (primitive)
+	switch (GL3_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -284,11 +285,11 @@ static void gl3_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primi
 #endif
 }
 
-static void gl3_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void gl3_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
-	GL3_CALL(DrawArrays, gfx_gl_primitives[primitive], offset, count);
+	GL3_CALL(DrawArrays, gfx_gl_primitives[GL3_DEVICE->primitive], offset, count);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (GL3_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -585,9 +586,9 @@ static void gl3_delete_attributes_state(gfx_device_t *device, gfx_attributes_sta
 	pthread_mutex_unlock(&GL_DEVICE->delete_mutex);
 }
 
-static bool gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+static bool gl3_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_shader_state_t *shader_state)
 {
-	(void)program;
+	(void)shader_state;
 	assert(!input_layout->handle.u64);
 	input_layout->device = device;
 	memcpy(input_layout->binds, binds, sizeof(*binds) * count);
@@ -875,73 +876,122 @@ static void gl3_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 	pthread_mutex_unlock(&GL_DEVICE->delete_mutex);
 }
 
-static bool gl3_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
+static bool gl3_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers)
 {
 	(void)attributes;
-	assert(!program->handle.u64);
-	assert(vertex_shader->handle.u64);
-	assert(fragment_shader->handle.u64);
-	program->device = device;
-	GL3_CALL_RET(program->handle.u32[0], CreateProgram);
-	GL3_CALL(AttachShader, program->handle.u32[0], vertex_shader->handle.u32[0]);
-	GL3_CALL(AttachShader, program->handle.u32[0], fragment_shader->handle.u32[0]);
+	assert(!shader_state->handle.u64);
+	const gfx_shader_t *vertex_shader = NULL;
+	const gfx_shader_t *fragment_shader = NULL;
+	const gfx_shader_t *geometry_shader = NULL;
+	for (uint32_t i = 0; i < shaders_count; ++i)
+	{
+		if (!shaders[i])
+			continue;
+		switch (shaders[i]->type)
+		{
+			case GFX_SHADER_VERTEX:
+				if (vertex_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple vertex shaders given");
+					return false;
+				}
+				vertex_shader = shaders[i];
+				break;
+			case GFX_SHADER_FRAGMENT:
+				if (fragment_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple fragment shaders given");
+					return false;
+				}
+				fragment_shader = shaders[i];
+				break;
+			case GFX_SHADER_GEOMETRY:
+				if (geometry_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple geometry shaders given");
+					return false;
+				}
+				geometry_shader = shaders[i];
+				break;
+		}
+	}
+	if (!vertex_shader)
+	{
+		GFX_ERROR_CALLBACK("no vertex shader given");
+		return false;
+	}
+	if (!fragment_shader)
+	{
+		GFX_ERROR_CALLBACK("no fragment shader given");
+		return false;
+	}
+
+	assert(vertex_shader->handle.u32[0]);
+	assert(fragment_shader->handle.u32[0]);
 	if (geometry_shader)
-		GL3_CALL(AttachShader, program->handle.u32[0], geometry_shader->handle.u32[0]);
+		assert(geometry_shader->handle.u32[0]);
+
+	shader_state->device = device;
+	GL3_CALL_RET(shader_state->handle.u32[0], CreateProgram);
+	GL3_CALL(AttachShader, shader_state->handle.u32[0], vertex_shader->handle.u32[0]);
+	GL3_CALL(AttachShader, shader_state->handle.u32[0], fragment_shader->handle.u32[0]);
+	if (geometry_shader)
+		GL3_CALL(AttachShader, shader_state->handle.u32[0], geometry_shader->handle.u32[0]);
 	/* OpenGL 2
 	for (uint32_t i = 0; attributes[i].name; ++i)
-		GL3_CALL(BindAttribLocation, program->handle.u32[0], attributes[i].bind, attributes[i].name);
+		GL3_CALL(BindAttribLocation, shader_state->handle.u32[0], attributes[i].bind, attributes[i].name);
 	*/
-	GL3_CALL(LinkProgram, program->handle.u32[0]);
+	GL3_CALL(LinkProgram, shader_state->handle.u32[0]);
 	GLint result = GL_FALSE;
-	GL3_CALL(GetProgramiv, program->handle.u32[0], GL_LINK_STATUS, &result);
+	GL3_CALL(GetProgramiv, shader_state->handle.u32[0], GL_LINK_STATUS, &result);
 	if (!result)
 	{
 #ifndef NDEBUG
 		//int info_log_length;
-		//GL3_CALL(GetProgramiv, program->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
+		//GL3_CALL(GetProgramiv, shader_state->handle.u32[0], GL_INFO_LOG_LENGTH, &info_log_length);
 		char error[4096] = "";
-		GL3_CALL(GetProgramInfoLog, program->handle.u32[0], sizeof(error), NULL, error);
+		GL3_CALL(GetProgramInfoLog, shader_state->handle.u32[0], sizeof(error), NULL, error);
 		GFX_ERROR_CALLBACK("can't compile GLSL program: %s", error);
 #endif
 		return false;
 	}
-	GL3_CALL(DetachShader, program->handle.u32[0], vertex_shader->handle.u32[0]);
-	GL3_CALL(DetachShader, program->handle.u32[0], fragment_shader->handle.u32[0]);
+	GL3_CALL(DetachShader, shader_state->handle.u32[0], vertex_shader->handle.u32[0]);
+	GL3_CALL(DetachShader, shader_state->handle.u32[0], fragment_shader->handle.u32[0]);
 	if (geometry_shader)
-		GL3_CALL(DetachShader, program->handle.u32[0], geometry_shader->handle.u32[0]);
-	GL3_CALL(UseProgram, program->handle.u32[0]);
+		GL3_CALL(DetachShader, shader_state->handle.u32[0], geometry_shader->handle.u32[0]);
+	GL3_CALL(UseProgram, shader_state->handle.u32[0]);
 	for (uint32_t i = 0; constants[i].name; ++i)
 	{
 		GLint index;
-		GL3_CALL_RET(index, GetUniformBlockIndex, program->handle.u32[0], constants[i].name);
-		GL3_CALL(UniformBlockBinding, program->handle.u32[0], index, constants[i].bind);
+		GL3_CALL_RET(index, GetUniformBlockIndex, shader_state->handle.u32[0], constants[i].name);
+		GL3_CALL(UniformBlockBinding, shader_state->handle.u32[0], index, constants[i].bind);
 	}
 	for (uint32_t i = 0; samplers[i].name; ++i)
 	{
 		GLint index;
-		GL3_CALL_RET(index, GetUniformLocation, program->handle.u32[0], samplers[i].name);
+		GL3_CALL_RET(index, GetUniformLocation, shader_state->handle.u32[0], samplers[i].name);
 		GL3_CALL(Uniform1i, index, samplers[i].bind);
 	}
 	return true;
 }
 
-static void gl3_bind_program(gfx_device_t *device, const gfx_program_t *program)
+static void gl3_bind_shader_state(gfx_device_t *device, const gfx_shader_state_t *shader_state)
 {
-	assert(program->handle.u64);
-	if (GL_DEVICE->program == program->handle.u32[0])
+	assert(shader_state->handle.u64);
+	if (GL_DEVICE->program == shader_state->handle.u32[0])
 		return;
-	GL_DEVICE->program = program->handle.u32[0];
-	GL3_CALL(UseProgram, program->handle.u32[0]);
+	GL_DEVICE->program = shader_state->handle.u32[0];
+	GL3_CALL(UseProgram, shader_state->handle.u32[0]);
 }
 
-static void gl3_delete_program(gfx_device_t *device, gfx_program_t *program)
+static void gl3_delete_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state)
 {
-	if (!program || !program->handle.u64)
+	if (!shader_state || !shader_state->handle.u32[0])
 		return;
 	pthread_mutex_lock(&GL_DEVICE->delete_mutex);
-	if (!jks_array_push_back(&GL_DEVICE->delete_programs, &program->handle.u32[0]))
+	if (!jks_array_push_back(&GL_DEVICE->delete_programs, &shader_state->handle.u32[0]))
 		assert(!"failed to queue program gc");
-	program->handle.u32[0] = 0;
+	shader_state->handle.u32[0] = 0;
 	pthread_mutex_unlock(&GL_DEVICE->delete_mutex);
 }
 
@@ -1109,15 +1159,16 @@ static void gl3_resolve_render_target(gfx_device_t *device, const gfx_render_tar
 	GL3_CALL(BlitFramebuffer, 0, 0, width, height, 0, 0, width, height, gl_buffers, GL_NEAREST);
 }
 
-static bool gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+static bool gl3_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_shader_state_t *shader_state, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout, enum gfx_primitive_type primitive)
 {
 	assert(!state->handle.u64);
 	state->handle.u64 = ++GL_DEVICE->state_idx;
-	state->program = program;
+	state->shader_state = shader_state;
 	state->rasterizer_state = rasterizer;
 	state->depth_stencil_state = depth_stencil;
 	state->blend_state = blend;
 	state->input_layout = input_layout;
+	state->primitive = primitive;
 	return true;
 }
 
@@ -1135,11 +1186,12 @@ static void gl3_bind_pipeline_state(gfx_device_t *device, const gfx_pipeline_sta
 	if (GL_DEVICE->pipeline_state == state->handle.u64)
 		return;
 	GL_DEVICE->pipeline_state = state->handle.u64;
-	gl3_bind_program(device, state->program);
+	gl3_bind_shader_state(device, state->shader_state);
 	gl3_bind_rasterizer_state(device, state->rasterizer_state);
 	gl3_bind_depth_stencil_state(device, state->depth_stencil_state);
 	gl3_bind_blend_state(device, state->blend_state);
 	//gl3_bind_input_layout(device, state->input_layout);
+	GL3_DEVICE->primitive = state->primitive;
 }
 
 static void gl3_set_viewport(gfx_device_t *device, int32_t x, int32_t y, uint32_t width, uint32_t height)

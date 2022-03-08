@@ -364,14 +364,6 @@ err:
 	return false;
 }
 
-static void update_primitive_topology(gfx_device_t *device, enum gfx_primitive_type primitive)
-{
-	if (D3D11_DEVICE->primitive == primitive)
-		return;
-	ID3D11DeviceContext_IASetPrimitiveTopology(D3D11_DEVICE->d3dctx, primitives[primitive]);
-	D3D11_DEVICE->primitive = primitive;
-}
-
 static bool d3d11_ctr(gfx_device_t *device, gfx_window_t *window)
 {
 	if (!gfx_device_vtable.ctr(device, window))
@@ -439,12 +431,11 @@ static void d3d11_clear_depth_stencil(gfx_device_t *device, const gfx_render_tar
 	}
 }
 
-static void d3d11_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void d3d11_draw_indexed_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
-	update_primitive_topology(device, primitive);
 	ID3D11DeviceContext_DrawIndexedInstanced(D3D11_DEVICE->d3dctx, count, prim_count, offset, 0, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (D3D11_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3 * prim_count;
@@ -460,12 +451,11 @@ static void d3d11_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitiv
 #endif
 }
 
-static void d3d11_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void d3d11_draw_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
-	update_primitive_topology(device, primitive);
 	ID3D11DeviceContext_DrawInstanced(D3D11_DEVICE->d3dctx, count, prim_count, offset, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (D3D11_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -481,12 +471,11 @@ static void d3d11_draw_instanced(gfx_device_t *device, enum gfx_primitive_type p
 #endif
 }
 
-static void d3d11_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void d3d11_draw_indexed(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
-	update_primitive_topology(device, primitive);
 	ID3D11DeviceContext_DrawIndexed(D3D11_DEVICE->d3dctx, count, offset, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (D3D11_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -502,12 +491,11 @@ static void d3d11_draw_indexed(gfx_device_t *device, enum gfx_primitive_type pri
 #endif
 }
 
-static void d3d11_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void d3d11_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
-	update_primitive_topology(device, primitive);
 	ID3D11DeviceContext_Draw(D3D11_DEVICE->d3dctx, count, offset);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (D3D11_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -753,7 +741,7 @@ static void d3d11_delete_attributes_state(gfx_device_t *device, gfx_attributes_s
 	state->handle.ptr = NULL;
 }
 
-static bool d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+static bool d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_shader_state_t *shader_state)
 {
 	assert(!input_layout->handle.ptr);
 	input_layout->device = device;
@@ -774,7 +762,7 @@ static bool d3d11_create_input_layout(gfx_device_t *device, gfx_input_layout_t *
 		desc[desc_nb].InstanceDataStepRate = 0;
 		desc_nb++;
 	}
-	D3D11_CALL(ID3D11Device_CreateInputLayout, D3D11_DEVICE->d3ddev, desc, desc_nb, program->code, program->code_size, (ID3D11InputLayout**)&input_layout->handle.ptr);
+	D3D11_CALL(ID3D11Device_CreateInputLayout, D3D11_DEVICE->d3ddev, desc, desc_nb, shader_state->code, shader_state->code_size, (ID3D11InputLayout**)&input_layout->handle.ptr);
 	return true; /* XXX */
 }
 
@@ -1019,52 +1007,101 @@ static void d3d11_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 	shader->handle.ptr = NULL;
 }
 
-static bool d3d11_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
+static bool d3d11_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers)
 {
 	(void)attributes;
 	(void)constants;
 	(void)samplers;
-	assert(!program->handle.u64);
-	assert(vertex_shader->handle.u64);
-	assert(fragment_shader->handle.u64);
-	program->device = device;
-	program->vertex_shader = vertex_shader->handle;
-	ID3D11VertexShader_AddRef((ID3D11VertexShader*)program->vertex_shader.ptr);
-	program->fragment_shader = fragment_shader->handle;
-	ID3D11PixelShader_AddRef((ID3D11PixelShader*)program->fragment_shader.ptr);
+	assert(!shader_state->handle.u64);
+	const gfx_shader_t *vertex_shader = NULL;
+	const gfx_shader_t *fragment_shader = NULL;
+	const gfx_shader_t *geometry_shader = NULL;
+	for (uint32_t i = 0; i < shaders_count; ++i)
+	{
+		if (!shaders[i])
+			continue;
+		switch (shaders[i]->type)
+		{
+			case GFX_SHADER_VERTEX:
+				if (vertex_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple vertex shaders given");
+					return false;
+				}
+				vertex_shader = shaders[i];
+				break;
+			case GFX_SHADER_FRAGMENT:
+				if (fragment_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple fragment shaders given");
+					return false;
+				}
+				fragment_shader = shaders[i];
+				break;
+			case GFX_SHADER_GEOMETRY:
+				if (geometry_shader)
+				{
+					GFX_ERROR_CALLBACK("multiple geometry shaders given");
+					return false;
+				}
+				geometry_shader = shaders[i];
+				break;
+		}
+	}
+	if (!vertex_shader)
+	{
+		GFX_ERROR_CALLBACK("no vertex shader given");
+		return false;
+	}
+	if (!fragment_shader)
+	{
+		GFX_ERROR_CALLBACK("no fragment shader given");
+		return false;
+	}
+
+	assert(vertex_shader->handle.u32[0]);
+	assert(fragment_shader->handle.u32[0]);
+	if (geometry_shader)
+		assert(geometry_shader->handle.u32[0]);
+
+	shader_state->device = device;
+	shader_state->vertex_shader = vertex_shader->handle;
+	ID3D11VertexShader_AddRef((ID3D11VertexShader*)shader_state->vertex_shader.ptr);
+	shader_state->fragment_shader = fragment_shader->handle;
+	ID3D11PixelShader_AddRef((ID3D11PixelShader*)shader_state->fragment_shader.ptr);
 	if (geometry_shader)
 	{
-		program->geometry_shader = geometry_shader->handle;
-		ID3D11GeometryShader_AddRef((ID3D11GeometryShader*)program->geometry_shader.ptr);
+		shader_state->geometry_shader = geometry_shader->handle;
+		ID3D11GeometryShader_AddRef((ID3D11GeometryShader*)shader_state->geometry_shader.ptr);
 	}
 	else
 	{
-		program->geometry_shader.ptr = NULL;
+		shader_state->geometry_shader.ptr = NULL;
 	}
-	program->code_size = vertex_shader->code_size;
-	program->code =  GFX_MALLOC(program->code_size);
-	if (!program->code)
+	shader_state->code_size = vertex_shader->code_size;
+	shader_state->code =  GFX_MALLOC(shader_state->code_size);
+	if (!shader_state->code)
 		return false;
-	memcpy(program->code, vertex_shader->code, program->code_size);
+	memcpy(shader_state->code, vertex_shader->code, shader_state->code_size);
 	return true;
 }
 
-static void d3d11_bind_program(gfx_device_t *device, const gfx_program_t *program)
+static void d3d11_bind_shader_state(gfx_device_t *device, const gfx_shader_state_t *shader_state)
 {
-	ID3D11DeviceContext_VSSetShader(D3D11_DEVICE->d3dctx, (ID3D11VertexShader*)program->vertex_shader.ptr, NULL, 0);
-	ID3D11DeviceContext_PSSetShader(D3D11_DEVICE->d3dctx, (ID3D11PixelShader*)program->fragment_shader.ptr, NULL, 0);
-	if (program->geometry_shader.ptr)
-		ID3D11DeviceContext_GSSetShader(D3D11_DEVICE->d3dctx, (ID3D11GeometryShader*)program->fragment_shader.ptr, NULL, 0);
+	ID3D11DeviceContext_VSSetShader(D3D11_DEVICE->d3dctx, (ID3D11VertexShader*)shader_state->vertex_shader.ptr, NULL, 0);
+	ID3D11DeviceContext_PSSetShader(D3D11_DEVICE->d3dctx, (ID3D11PixelShader*)shader_state->fragment_shader.ptr, NULL, 0);
+	if (shader_state->geometry_shader.ptr)
+		ID3D11DeviceContext_GSSetShader(D3D11_DEVICE->d3dctx, (ID3D11GeometryShader*)shader_state->fragment_shader.ptr, NULL, 0);
 }
 
-static void d3d11_delete_program(gfx_device_t *device, gfx_program_t *program)
+static void d3d11_delete_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state)
 {
 	(void)device;
-	ID3D11VertexShader_Release((ID3D11VertexShader*)program->vertex_shader.ptr);
-	ID3D11PixelShader_Release((ID3D11PixelShader*)program->fragment_shader.ptr);
-	if (program->geometry_shader.ptr)
-		ID3D11GeometryShader_Release((ID3D11GeometryShader*)program->geometry_shader.ptr);
-	GFX_FREE(program->code);
+	ID3D11VertexShader_Release((ID3D11VertexShader*)shader_state->vertex_shader.ptr);
+	ID3D11PixelShader_Release((ID3D11PixelShader*)shader_state->fragment_shader.ptr);
+	if (shader_state->geometry_shader.ptr)
+		ID3D11GeometryShader_Release((ID3D11GeometryShader*)shader_state->geometry_shader.ptr);
+	GFX_FREE(shader_state->code);
 }
 
 static void d3d11_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset)
@@ -1253,15 +1290,16 @@ static void d3d11_resolve_render_target(gfx_device_t *device, const gfx_render_t
 	//ID3D11DeviceContext_ResolveSubresource(D3D11_DEVICE->d3ddev, dst_res, 0, src_res, 0, formats[src_res->format]);
 }
 
-static bool d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+static bool d3d11_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_shader_state_t *shader_state, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout, enum gfx_primitive_type primitive)
 {
 	assert(!state->handle.u64);
 	state->handle.u64 = ++D3D11_DEVICE->state_idx;
-	state->program = program;
+	state->shader_state = shader_state;
 	state->rasterizer_state = rasterizer;
 	state->depth_stencil_state = depth_stencil;
 	state->blend_state = blend;
 	state->input_layout = input_layout;
+	state->primitive = primitive;
 	return true;
 }
 
@@ -1279,11 +1317,16 @@ static void d3d11_bind_pipeline_state(gfx_device_t *device, const gfx_pipeline_s
 	if (D3D11_DEVICE->pipeline_state == state->handle.u64)
 		return;
 	D3D11_DEVICE->pipeline_state = state->handle.u64;
-	d3d11_bind_program(device, state->program);
+	d3d11_bind_shader_state(device, state->shader_state);
 	d3d11_bind_rasterizer_state(device, state->rasterizer_state);
 	d3d11_bind_depth_stencil_state(device, state->depth_stencil_state);
 	d3d11_bind_blend_state(device, state->blend_state);
 	//d3d11_bind_input_layout(device, state->input_layout);
+	if (D3D11_DEVICE->primitive != state->primitive)
+	{
+		D3D11_DEVICE->primitive = state->primitive;
+		ID3D11DeviceContext_IASetPrimitiveTopology(D3D11_DEVICE->d3dctx, primitives[state->primitive]);
+	}
 }
 
 static void d3d11_set_viewport(gfx_device_t *device, int32_t x, int32_t y, uint32_t width, uint32_t height)

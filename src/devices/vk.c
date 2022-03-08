@@ -155,7 +155,10 @@ typedef struct gfx_vk_device_s
 	uint32_t graphics_family;
 	uint32_t present_family;
 	VkPresentModeKHR present_mode;
+	enum gfx_primitive_type primitive;
 } gfx_vk_device_t;
+
+#define ALLOCATION_CALLBACKS NULL //&VK_DEVICE->allocation_callbacks
 
 static const char *vk_err2str(VkResult result)
 {
@@ -364,7 +367,7 @@ static bool create_device(gfx_device_t *device)
 	create_info.enabledExtensionCount = sizeof(extensions) / sizeof(*extensions);
 	create_info.ppEnabledExtensionNames = extensions;
 	create_info.pEnabledFeatures = NULL;
-	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->vk_device);
+	VkResult result = vkCreateDevice(VK_DEVICE->physical_device, &create_info, ALLOCATION_CALLBACKS, &VK_DEVICE->vk_device);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create device: %s (%d)", strerror(errno), errno);
@@ -455,7 +458,7 @@ static bool create_swapchain(gfx_device_t *device)
 	create_info.presentMode = present_mode;
 	create_info.clipped = VK_TRUE;
 	create_info.oldSwapchain = VK_DEVICE->swap_chain;
-	VkResult result = vkCreateSwapchainKHR(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->swap_chain);
+	VkResult result = vkCreateSwapchainKHR(VK_DEVICE->vk_device, &create_info, ALLOCATION_CALLBACKS, &VK_DEVICE->swap_chain);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create swapchain: %s (%d)", vk_err2str(result), result);
@@ -513,7 +516,7 @@ static bool create_image_views(gfx_device_t *device)
 		create_info.subresourceRange.levelCount = 1;
 		create_info.subresourceRange.baseArrayLayer = 0;
 		create_info.subresourceRange.layerCount = 1;
-		VkResult result = vkCreateImageView(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &image_views[i]);
+		VkResult result = vkCreateImageView(VK_DEVICE->vk_device, &create_info, ALLOCATION_CALLBACKS, &image_views[i]);
 		if (result != VK_SUCCESS)
 		{
 			GFX_ERROR_CALLBACK("can't allocate image views: %s (%d)", vk_err2str(result), result);
@@ -533,7 +536,7 @@ static bool create_command_pool(gfx_device_t *device)
 	create_info.pNext = NULL;
 	create_info.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	create_info.queueFamilyIndex = 0;
-	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, &VK_DEVICE->allocation_callbacks, &VK_DEVICE->command_pool);
+	VkResult result = vkCreateCommandPool(VK_DEVICE->vk_device, &create_info, ALLOCATION_CALLBACKS, &VK_DEVICE->command_pool);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create vulkan command pool: %s (%d)", vk_err2str(result), result);
@@ -583,11 +586,11 @@ static bool vk_ctr(gfx_device_t *device, gfx_window_t *window)
 static void vk_dtr(gfx_device_t *device)
 {
 	for (uint32_t i = 0; i < VK_DEVICE->surface_image_views_count; ++i)
-		vkDestroyImageView(VK_DEVICE->vk_device, VK_DEVICE->surface_image_views[i], &VK_DEVICE->allocation_callbacks);
+		vkDestroyImageView(VK_DEVICE->vk_device, VK_DEVICE->surface_image_views[i], ALLOCATION_CALLBACKS);
 	vkFreeCommandBuffers(VK_DEVICE->vk_device, VK_DEVICE->command_pool, 1, &VK_DEVICE->command_buffer);
-	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, &VK_DEVICE->allocation_callbacks);
-	vkDestroySwapchainKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, &VK_DEVICE->allocation_callbacks);
-	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, &VK_DEVICE->allocation_callbacks);
+	vkDestroyCommandPool(VK_DEVICE->vk_device, VK_DEVICE->command_pool, ALLOCATION_CALLBACKS);
+	vkDestroySwapchainKHR(VK_DEVICE->vk_device, VK_DEVICE->swap_chain, ALLOCATION_CALLBACKS);
+	vkDestroySurfaceKHR(VK_DEVICE->instance, VK_DEVICE->surface, ALLOCATION_CALLBACKS);
 	vkDestroyInstance(VK_DEVICE->instance, NULL); /* XXX: allocation callbacks */
 	vkDestroyDevice(VK_DEVICE->vk_device, NULL); /* XXX: allocation callbacks */
 	GFX_FREE(VK_DEVICE->surface_image_views);
@@ -633,11 +636,11 @@ static void vk_clear_depth_stencil(gfx_device_t *device, const gfx_render_target
 	//vkCmdClearDepthStencilImage(VK_DEVICE->command_buffer, image, image_layout, &vk_depth_stencil, 1, &range
 }
 
-static void vk_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void vk_draw_indexed_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	vkCmdDrawIndexed(VK_DEVICE->command_buffer, count, prim_count, offset, 0, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (VK_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3 * prim_count;
@@ -653,11 +656,11 @@ static void vk_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_t
 #endif
 }
 
-static void vk_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+static void vk_draw_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	vkCmdDraw(VK_DEVICE->command_buffer, count, prim_count, offset, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (VK_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -673,11 +676,11 @@ static void vk_draw_instanced(gfx_device_t *device, enum gfx_primitive_type prim
 #endif
 }
 
-static void vk_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void vk_draw_indexed(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
 	vkCmdDrawIndexed(VK_DEVICE->command_buffer, count, 1, offset, 0, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (VK_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -693,11 +696,11 @@ static void vk_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primit
 #endif
 }
 
-static void vk_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+static void vk_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
 	vkCmdDraw(VK_DEVICE->command_buffer, count, 1, offset, 0);
 #ifndef NDEBUG
-	switch (primitive)
+	switch (VK_DEVICE->primitive)
 	{
 		case GFX_PRIMITIVE_TRIANGLES:
 			device->triangles_count += count / 3;
@@ -827,9 +830,9 @@ static void vk_delete_attributes_state(gfx_device_t *device, gfx_attributes_stat
 	state->handle.ptr = NULL;
 }
 
-static bool vk_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+static bool vk_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_shader_state_t *shader_state)
 {
-	(void)program;
+	(void)shader_state;
 	assert(!input_layout->handle.ptr);
 	input_layout->handle.ptr = (void*)1;
 	input_layout->device = device;
@@ -877,14 +880,14 @@ static void vk_delete_texture(gfx_device_t *device, gfx_texture_t *texture)
 
 static bool vk_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum gfx_shader_type type, const uint8_t *data, uint32_t len)
 {
-	VkShaderModuleCreateInfo create_info;
-	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	create_info.pNext = NULL;
-	create_info.flags = 0;
-	create_info.codeSize = len;
-	create_info.pCode = (const uint32_t*)data;
+	VkShaderModuleCreateInfo shader_create_info;
+	shader_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shader_create_info.pNext = NULL;
+	shader_create_info.flags = 0;
+	shader_create_info.codeSize = len;
+	shader_create_info.pCode = (const uint32_t*)data;
 	VkShaderModule shaderModule;
-	VkResult result = vkCreateShaderModule(VK_DEVICE->vk_device, &create_info, NULL, (VkShaderModule*)&shader->handle.ptr);
+	VkResult result = vkCreateShaderModule(VK_DEVICE->vk_device, &shader_create_info, ALLOCATION_CALLBACKS, (VkShaderModule*)&shader->handle.ptr);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create shader module: %s (%d)", vk_err2str(result), result);
@@ -897,26 +900,101 @@ static void vk_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 {
 	if (!shader || !shader->handle.ptr)
 		return;
-	vkDestroyShaderModule(VK_DEVICE->vk_device, (VkShaderModule)shader->handle.ptr, NULL);
+	vkDestroyShaderModule(VK_DEVICE->vk_device, (VkShaderModule)shader->handle.ptr, ALLOCATION_CALLBACKS);
 	shader->handle.ptr = NULL;
 }
 
-static bool vk_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
+static bool vk_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers)
 {
-	assert(!program->handle.ptr);
+	VkResult result;
+	assert(!shader_state->handle.ptr);
+	uint32_t constant_layouts_count = 0;
+	uint32_t sampler_layouts_count = 0;
+	while (constants[constant_layouts_count].name)
+		constant_layouts_count++;
+	while (samplers[sampler_layouts_count].name)
+		sampler_layouts_count++;
+	VkDescriptorSetLayout *layouts = GFX_MALLOC(sizeof(*layouts) * (sampler_layouts_count + constant_layouts_count));
+	if (!layouts)
+	{
+		GFX_ERROR_CALLBACK("can't allocate layouts: %s (%d)", strerror(errno), errno);
+		return false;
+	}
+	for (uint32_t i = 0; i < constant_layouts_count; ++i)
+	{
+		VkDescriptorSetLayoutBinding binding;
+		binding.binding = i;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+		binding.pImmutableSamplers = NULL;
+
+		VkDescriptorSetLayoutCreateInfo layout_create_info;
+		layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layout_create_info.pNext = NULL;
+		layout_create_info.flags = 0;
+		layout_create_info.bindingCount = 1;
+		layout_create_info.pBindings = &binding;
+		result = vkCreateDescriptorSetLayout(VK_DEVICE->vk_device, &layout_create_info, ALLOCATION_CALLBACKS, (VkDescriptorSetLayout*)&layouts[i]);
+		if (result != VK_SUCCESS)
+		{
+			/* XXX: release all previously created */
+			GFX_ERROR_CALLBACK("can't create descriptor set layout: %s (%d)", vk_err2str(result), result);
+			return false;
+		}
+	}
+	for (uint32_t i = 0; i < sampler_layouts_count; ++i)
+	{
+		VkDescriptorSetLayoutBinding binding;
+		binding.binding = i;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+		binding.pImmutableSamplers = NULL;
+
+		VkDescriptorSetLayoutCreateInfo layout_create_info;
+		layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layout_create_info.pNext = NULL;
+		layout_create_info.flags = 0;
+		layout_create_info.bindingCount = 1;
+		layout_create_info.pBindings = &binding;
+		result = vkCreateDescriptorSetLayout(VK_DEVICE->vk_device, &layout_create_info, ALLOCATION_CALLBACKS, (VkDescriptorSetLayout*)&layouts[constant_layouts_count + i]);
+		if (result != VK_SUCCESS)
+		{
+			/* XXX: release all previously created */
+			GFX_ERROR_CALLBACK("can't create descriptor set layout: %s (%d)", vk_err2str(result), result);
+			return false;
+		}
+	}
+
+	VkPipelineLayoutCreateInfo pipeline_create_info;
+	pipeline_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_create_info.pNext = NULL;
+	pipeline_create_info.flags = 0;
+	pipeline_create_info.setLayoutCount = constant_layouts_count + sampler_layouts_count;
+	pipeline_create_info.pSetLayouts = layouts;
+	pipeline_create_info.pushConstantRangeCount = 0;
+	pipeline_create_info.pPushConstantRanges = NULL;
+	result = vkCreatePipelineLayout(VK_DEVICE->vk_device, &pipeline_create_info, ALLOCATION_CALLBACKS, (VkPipelineLayout*)&shader_state->pipeline_layout.ptr);
+	if (result != VK_SUCCESS)
+	{
+		GFX_ERROR_CALLBACK("can't create pipeline layout: %s (%d)", vk_err2str(result), result);
+		return false;
+	}
 	return true;
 }
 
-static void vk_delete_program(gfx_device_t *device, gfx_program_t *program)
+static void vk_delete_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state)
 {
-	if (!program || !program->handle.ptr)
+	if (!shader_state || !shader_state->handle.ptr)
 		return;
-	program->handle.ptr = NULL;
+	vkDestroyPipelineLayout(VK_DEVICE->vk_device, (VkPipelineLayout)shader_state->pipeline_layout.ptr, ALLOCATION_CALLBACKS);
+	shader_state->handle.ptr = NULL;
 }
 
 static void vk_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset)
 {
-	//vkCmdBindDescriptorSets
+	//vkCmdBindDescriptorSets(VK_DEVICE->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, bind, 1, &descriptor_sets[i], 1, &offset);
 }
 
 static void vk_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t count, const gfx_texture_t **texture)
@@ -949,30 +1027,33 @@ static void vk_resolve_render_target(gfx_device_t *device, const gfx_render_targ
 {
 }
 
-static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_shader_state_t *shader_state, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout, enum gfx_primitive_type primitive)
 {
+	assert(state && !state->handle.ptr);
+	state->primitive = primitive;
+
 	uint32_t shader_stages_count = 2;
 	VkPipelineShaderStageCreateInfo shader_stages[3];
 	shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].pNext = NULL;
 	shader_stages[0].flags = 0;
 	shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = (VkShaderModule)program->vertex_shader.ptr;
+	shader_stages[0].module = (VkShaderModule)shader_state->vertex_shader.ptr;
 	shader_stages[0].pName = "main";
 	shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].pNext = NULL;
 	shader_stages[1].flags = 0;
 	shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = (VkShaderModule)program->fragment_shader.ptr;
+	shader_stages[1].module = (VkShaderModule)shader_state->fragment_shader.ptr;
 	shader_stages[1].pName = "main";
-	if (program->geometry_shader.ptr)
+	if (shader_state->geometry_shader.ptr)
 	{
 		shader_stages_count++;
 		shader_stages[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shader_stages[2].pNext = NULL;
 		shader_stages[2].flags = 0;
 		shader_stages[2].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		shader_stages[2].module = (VkShaderModule)program->geometry_shader.ptr;
+		shader_stages[2].module = (VkShaderModule)shader_state->geometry_shader.ptr;
 		shader_stages[2].pName = "main";
 	}
 
@@ -1024,12 +1105,12 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	multisample_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisample_create_info.pNext = NULL;
 	multisample_create_info.flags = 0;
-	multisample_create_info.rasterizationSamples = ;
-	multisample_create_info.sampleShadingEnable = ;
-	multisample_create_info.minSampleShading = ;
-	multisample_create_info.pSampleMask = ;
-	multisample_create_info.alphaToCoverageEnable = ;
-	multisample_create_info.alphaToOneEnable = ;
+	multisample_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT; //XXX
+	multisample_create_info.sampleShadingEnable = VK_FALSE; //XXX
+	multisample_create_info.minSampleShading = 1; //XXX
+	multisample_create_info.pSampleMask = NULL; //XXX
+	multisample_create_info.alphaToCoverageEnable = VK_FALSE; //XXX
+	multisample_create_info.alphaToOneEnable = VK_FALSE; //XXX
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_create_info;
 	depth_stencil_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1109,12 +1190,12 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	create_info.pDepthStencilState = &depth_stencil_create_info;
 	create_info.pColorBlendState = &color_blend_create_info;
 	create_info.pDynamicState = &dynamic_state_create_info;
-	create_info.layout = ;
+	create_info.layout = (VkPipelineLayout)shader_state->pipeline_layout.ptr;
 	create_info.renderPass = ;
 	create_info.subpass = ;
 	create_info.basePipelineHandle = VK_NULL_HANDLE;
 	create_info.basePipelineIndex = -1;
-	VkResult result = vkCreateGraphicsPipelines(VK_DEVICE->vk_device, cache, 1, &create_info, NULL, (VkPipeline*)&state->handle.ptr);
+	VkResult result = vkCreateGraphicsPipelines(VK_DEVICE->vk_device, VK_NULL_HANDLE, 1, &create_info, NULL, (VkPipeline*)&state->handle.ptr);
 	if (result != VK_SUCCESS)
 	{
 		GFX_ERROR_CALLBACK("can't create graphics pipeline: %s (%d)", vk_err2str(result), result);
@@ -1134,6 +1215,7 @@ static void vk_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 static void vk_bind_pipeline_state(gfx_device_t *device, const gfx_pipeline_state_t *state)
 {
 	assert(state);
+	VK_DEVICE->primitive = state->primitive;
 	vkCmdBindPipeline(VK_DEVICE->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, (VkPipeline)state->handle.ptr);
 }
 
@@ -1197,14 +1279,25 @@ void gfx_vk_swap_buffers(gfx_device_t *device)
 
 static void *vk_allocation(void *userdata, size_t size, size_t alignment, VkSystemAllocationScope scope)
 {
+	uint8_t *addr = GFX_MALLOC(size + alignment);
+	size_t delta = (size_t)addr % alignment;
+	if (!delta)
+		return addr;
+	return addr - delta + alignment;
 }
 
 static void *vk_realloaction(void *userdata, void *original, size_t size, size_t alignment, VkSystemAllocationScope scope)
 {
+	uint8_t *addr = GFX_REALLOC(original, size + alignment);
+	size_t delta = (size_t)addr % alignment;
+	if (!delta)
+		return addr;
+	return addr - delta + alignment;
 }
 
 static void vk_free(void *userdata, void *memory)
 {
+	GFX_FREE(memory);
 }
 
 static void vk_internal_allocation(void *userdata, size_t size, VkInternalAllocationType type, VkSystemAllocationScope scope)
@@ -1222,11 +1315,11 @@ gfx_device_t *gfx_vk_device_new(gfx_window_t *window, VkInstance instance, VkSur
 		return NULL;
 	memset(device, 0, sizeof(*device));
 	device->allocation_callbacks.pUserData = NULL;
-	device->allocation_callbacks.pfnAllocation = vk_allocation;
-	device->allocation_callbacks.pfnReallocation = vk_realloaction;
-	device->allocation_callbacks.pfnFree = vk_free;
-	device->allocation_callbacks.pfnInternalAllocation = vk_internal_allocation;
-	device->allocation_callbacks.pfnInternalFree = vk_internal_free;
+	device->allocation_callbacks.pfnAllocation = NULL;//vk_allocation;
+	device->allocation_callbacks.pfnReallocation = NULL;//vk_realloaction;
+	device->allocation_callbacks.pfnFree = NULL;//vk_free;
+	device->allocation_callbacks.pfnInternalAllocation = NULL;//vk_internal_allocation;
+	device->allocation_callbacks.pfnInternalFree = NULL;//vk_internal_free;
 	gfx_device_t *dev = &device->device;
 	dev->vtable = &vk_vtable;
 	device->instance = instance;

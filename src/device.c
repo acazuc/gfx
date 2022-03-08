@@ -78,31 +78,31 @@ void gfx_clear_depth_stencil(gfx_device_t *device, const gfx_render_target_t *re
 	DEV_DEBUG;
 }
 
-void gfx_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+void gfx_draw_indexed_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	DEV_DEBUG;
-	device->vtable->draw_indexed_instanced(device, primitive, count, offset, prim_count);
+	device->vtable->draw_indexed_instanced(device, count, offset, prim_count);
 	DEV_DEBUG;
 }
 
-void gfx_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t prim_count)
+void gfx_draw_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t prim_count)
 {
 	DEV_DEBUG;
-	device->vtable->draw_instanced(device, primitive, count, offset, prim_count);
+	device->vtable->draw_instanced(device, count, offset, prim_count);
 	DEV_DEBUG;
 }
 
-void gfx_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+void gfx_draw_indexed(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
 	DEV_DEBUG;
-	device->vtable->draw_indexed(device, primitive, count, offset);
+	device->vtable->draw_indexed(device, count, offset);
 	DEV_DEBUG;
 }
 
-void gfx_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset)
+void gfx_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 {
 	DEV_DEBUG;
-	device->vtable->draw(device, primitive, count, offset);
+	device->vtable->draw(device, count, offset);
 	DEV_DEBUG;
 }
 
@@ -195,10 +195,10 @@ void gfx_delete_attributes_state(gfx_device_t *device, gfx_attributes_state_t *s
 	DEV_DEBUG;
 }
 
-bool gfx_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program)
+bool gfx_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_shader_state_t *shader_state)
 {
 	DEV_DEBUG;
-	bool ret = device->vtable->create_input_layout(device, input_layout, binds, count, program);
+	bool ret = device->vtable->create_input_layout(device, input_layout, binds, count, shader_state);
 	DEV_DEBUG;
 	return ret;
 }
@@ -275,18 +275,18 @@ void gfx_delete_shader(gfx_device_t *device, gfx_shader_t *shader)
 	DEV_DEBUG;
 }
 
-bool gfx_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers)
+bool gfx_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers)
 {
 	DEV_DEBUG;
-	bool ret = device->vtable->create_program(device, program, vertex_shader, fragment_shader, geometry_shader, attributes, constants, samplers);
+	bool ret = device->vtable->create_shader_state(device, shader_state, shaders, shaders_count, attributes, constants, samplers);
 	DEV_DEBUG;
 	return ret;
 }
 
-void gfx_delete_program(gfx_device_t *device, gfx_program_t *program)
+void gfx_delete_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state)
 {
 	DEV_DEBUG;
-	device->vtable->delete_program(device, program);
+	device->vtable->delete_shader_state(device, shader_state);
 	DEV_DEBUG;
 }
 
@@ -348,10 +348,10 @@ void gfx_resolve_render_target(const gfx_render_target_t *src, const gfx_render_
 }
 
 
-bool gfx_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout)
+bool gfx_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_shader_state_t *shader_state, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout, enum gfx_primitive_type primitive)
 {
 	DEV_DEBUG;
-	bool ret = device->vtable->create_pipeline_state(device, state, program, rasterizer, depth_stencil, blend, input_layout);
+	bool ret = device->vtable->create_pipeline_state(device, state, shader_state, rasterizer, depth_stencil, blend, input_layout, primitive);
 	DEV_DEBUG;
 	return ret;
 }

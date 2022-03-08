@@ -84,7 +84,7 @@ const GLenum gfx_gl_fill_modes[3] =
 	GL_FILL,
 };
 
-const GLenum gfx_gl_front_faces[2] 
+const GLenum gfx_gl_front_faces[2] =
 {
 	GL_CW,
 	GL_CCW,

@@ -34,10 +34,10 @@ uint32_t gfx_get_uniform_buffer_size(gfx_device_t *device, uint32_t buffer_size)
 void gfx_clear_color(gfx_device_t *device, const gfx_render_target_t *render_target, enum gfx_render_target_attachment attachment, vec4f_t color);
 void gfx_clear_depth_stencil(gfx_device_t *device, const gfx_render_target_t *render_target, float depth, uint8_t stencil);
 
-void gfx_draw_indexed_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t primcount);
-void gfx_draw_instanced(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset, uint32_t primcount);
-void gfx_draw_indexed(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset);
-void gfx_draw(gfx_device_t *device, enum gfx_primitive_type primitive, uint32_t count, uint32_t offset);
+void gfx_draw_indexed_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t primcount);
+void gfx_draw_instanced(gfx_device_t *device, uint32_t count, uint32_t offset, uint32_t primcount);
+void gfx_draw_indexed(gfx_device_t *device, uint32_t count, uint32_t offset);
+void gfx_draw(gfx_device_t *device, uint32_t count, uint32_t offset);
 
 bool gfx_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a);
 void gfx_delete_blend_state(gfx_device_t *device, gfx_blend_state_t *state);
@@ -56,7 +56,7 @@ bool gfx_create_attributes_state(gfx_device_t *device, gfx_attributes_state_t *s
 void gfx_bind_attributes_state(gfx_device_t *device, const gfx_attributes_state_t *state, const gfx_input_layout_t *input_layout);
 void gfx_delete_attributes_state(gfx_device_t *device, gfx_attributes_state_t *state);
 
-bool gfx_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_program_t *program);
+bool gfx_create_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout, const gfx_input_layout_bind_t *binds, uint32_t count, const gfx_shader_state_t *shader_state);
 void gfx_delete_input_layout(gfx_device_t *device, gfx_input_layout_t *input_layout);
 
 bool gfx_create_texture(gfx_device_t *device, gfx_texture_t *texture, enum gfx_texture_type type, enum gfx_format format, uint8_t lod, uint32_t width, uint32_t height, uint32_t depth);
@@ -69,8 +69,8 @@ void gfx_delete_texture(gfx_device_t *device, gfx_texture_t *texture);
 
 bool gfx_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum gfx_shader_type type, const uint8_t *data, uint32_t len);
 void gfx_delete_shader(gfx_device_t *device, gfx_shader_t *shader);
-bool gfx_create_program(gfx_device_t *device, gfx_program_t *program, const gfx_shader_t *vertex_shader, const gfx_shader_t *fragment_shader, const gfx_shader_t *geometry_shader, const gfx_program_attribute_t *attributes, const gfx_program_constant_t *constants, const gfx_program_sampler_t *samplers);
-void gfx_delete_program(gfx_device_t *device, gfx_program_t *program);
+bool gfx_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers);
+void gfx_delete_stader_state(gfx_device_t *device, gfx_shader_state_t *shader_state);
 void gfx_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset);
 void gfx_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t count, const gfx_texture_t **textures);
 
@@ -81,7 +81,7 @@ void gfx_set_render_target_texture(gfx_render_target_t *render_target, enum gfx_
 void gfx_set_render_target_draw_buffers(gfx_render_target_t *render_target, uint32_t *draw_buffers, uint32_t draw_buffers_count);
 void gfx_resolve_render_target(const gfx_render_target_t *src, const gfx_render_target_t *dst, uint32_t buffers, uint32_t src_color, uint32_t dst_color);
 
-bool gfx_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_program_t *program, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout);
+bool gfx_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state, const gfx_shader_state_t *shader_state, const gfx_rasterizer_state_t *rasterizer, const gfx_depth_stencil_state_t *depth_stencil, const gfx_blend_state_t *blend, const gfx_input_layout_t *input_layout, enum gfx_primitive_type primitive);
 void gfx_delete_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t *state);
 void gfx_bind_pipeline_state(gfx_device_t *device, const gfx_pipeline_state_t *pipeline);
 
