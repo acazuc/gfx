@@ -70,7 +70,7 @@ void gfx_delete_texture(gfx_device_t *device, gfx_texture_t *texture);
 bool gfx_create_shader(gfx_device_t *device, gfx_shader_t *shader, enum gfx_shader_type type, const uint8_t *data, uint32_t len);
 void gfx_delete_shader(gfx_device_t *device, gfx_shader_t *shader);
 bool gfx_create_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state, const gfx_shader_t **shaders, uint32_t shaders_count, const gfx_shader_attribute_t *attributes, const gfx_shader_constant_t *constants, const gfx_shader_sampler_t *samplers);
-void gfx_delete_stader_state(gfx_device_t *device, gfx_shader_state_t *shader_state);
+void gfx_delete_shader_state(gfx_device_t *device, gfx_shader_state_t *shader_state);
 void gfx_bind_constant(gfx_device_t *device, uint32_t bind, const gfx_buffer_t *buffer, uint32_t size, uint32_t offset);
 void gfx_bind_samplers(gfx_device_t *device, uint32_t start, uint32_t count, const gfx_texture_t **textures);
 
