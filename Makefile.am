@@ -64,14 +64,21 @@ WIN_VK_X11_SRC = src/windows/vk_x11.c
 WIN_VK_X11_LD = -lvulkan
 endif
 
+if WINDOW_VK_WIN32
+WIN_VK_WIN32_SRC = src/windows/vk_win32.c
+WIN_VK_WIN32_LD = -lvulkan
+endif
+
 libgfx_la_SOURCES = src/device.c src/window.c \
                     $(DEV_GL_SRC) $(DEV_GL3_SRC) $(DEV_GL4_SRC) \
                     $(DEV_D3D_SRC) $(DEV_D3D9_SRC) $(DEV_D3D11_SRC) \
                     $(DEV_VK_SRC) $(WIN_GLX_SRC) $(WIN_X11_SRC) \
                     $(WIN_GLFW_SRC) $(WIN_WGL_SRC) $(WIN_WIN32_SRC) \
-                    $(WIN_D3D_SRC) $(WIN_GL_SRC) $(WIN_VK_X11_SRC)
+                    $(WIN_D3D_SRC) $(WIN_GL_SRC) $(WIN_VK_X11_SRC) \
+                    $(WIN_VK_WIN32_SRC)
 
-libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) $(WIN_VK_X11_LD)
+libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) \
+                    $(WIN_VK_X11_LD) $(WIN_VK_WIN32_LD)
 
 pkgincludedir = $(includedir)/gfx
 pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h

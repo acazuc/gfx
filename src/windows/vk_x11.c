@@ -13,10 +13,6 @@ typedef struct gfx_vk_x11_window_s
 	gfx_x11_window_t x11;
 } gfx_vk_x11_window_t;
 
-#ifdef GLX_WINDOW
-# undef GLX_WINDOW
-#endif
-
 #define X11_WINDOW (&VK_X11_WINDOW->x11)
 #define VK_X11_WINDOW ((gfx_vk_x11_window_t*)window)
 

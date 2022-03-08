@@ -175,6 +175,10 @@ gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t heig
 			if (properties->device_backend == GFX_DEVICE_D3D9 || properties->device_backend == GFX_DEVICE_D3D11)
 				return gfx_d3d_window_new(title, width, height, properties);
 #endif
+#if defined(GFX_ENABLE_DEVICE_VK)
+			if (properties->device_backend == GFX_DEVICE_VK)
+				return gfx_vk_win32_window_new(title, width, height, properties);
+#endif
 #endif
 			break;
 		case GFX_WINDOW_WAYLAND:
