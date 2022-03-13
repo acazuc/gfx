@@ -126,7 +126,8 @@ struct gfx_window_s
 	gfx_close_callback_t close_callback;
 	gfx_window_properties_t properties;
 	gfx_device_t *device;
-	uint8_t *keys;
+	uint8_t keys[(GFX_KEY_LAST + 7) / 8];
+	uint8_t mouse_buttons;
 	double virtual_x;
 	double virtual_y;
 	int32_t mouse_x;

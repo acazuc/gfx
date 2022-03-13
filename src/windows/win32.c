@@ -197,6 +197,8 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			}
 			if (down)
 			{
+				if (button >= 0 && button <= GFX_MOUSE_BUTTON_LAST)
+					window->winref->mouse_buttons |= 1 << button;
 				if (window->winref->mouse_down_callback)
 				{
 					gfx_mouse_event_t event;
@@ -210,6 +212,8 @@ static LRESULT WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			}
 			else
 			{
+				if (button >= 0 && button <= GFX_MOUSE_BUTTON_LAST)
+					window->winref->mouse_buttons &= ~(1 << button);
 				if (window->winref->mouse_up_callback)
 				{
 					gfx_mouse_event_t event;

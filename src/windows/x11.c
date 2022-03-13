@@ -505,6 +505,10 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 					}
 					break;
 				default:
+				{
+					enum gfx_mouse_button button = (enum gfx_mouse_button)(event->xbutton.button - Button1 - 4 + GFX_MOUSE_BUTTON_LEFT);
+					if (button >= 0 && button < GFX_MOUSE_BUTTON_LAST)
+						window->winref->mouse_buttons |= 1 << button;
 					if (window->winref->mouse_down_callback)
 					{
 						gfx_mouse_event_t evt;
@@ -523,13 +527,14 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 								evt.button = GFX_MOUSE_BUTTON_RIGHT;
 								break;
 							default:
-								evt.button = (enum gfx_mouse_button)(event->xbutton.button - Button1 - 4 + GFX_MOUSE_BUTTON_LEFT);
+								evt.button = button;
 								break;
 						}
 						evt.mods = get_mods(event->xbutton.state);
 						window->winref->mouse_down_callback(&evt);
 					}
 					break;
+				}
 			}
 			break;
 		}
@@ -543,6 +548,10 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 				case 7:
 					break;
 				default:
+				{
+					enum gfx_mouse_button button = (enum gfx_mouse_button)(event->xbutton.button - Button1 - 4 + GFX_MOUSE_BUTTON_LEFT);
+					if (button >= 0 && button < GFX_MOUSE_BUTTON_LAST)
+						window->winref->mouse_buttons &= ~(1 << button);
 					if (window->winref->mouse_up_callback)
 					{
 						gfx_mouse_event_t evt;
@@ -561,13 +570,14 @@ static void process_event(gfx_x11_window_t *window, XEvent *event, XEvent *next)
 								evt.button = GFX_MOUSE_BUTTON_RIGHT;
 								break;
 							default:
-								evt.button = (enum gfx_mouse_button)(event->xbutton.button - Button1 - 4 + GFX_MOUSE_BUTTON_LEFT);
+								evt.button = button;
 								break;
 						}
 						evt.mods = get_mods(event->xbutton.state);
 						window->winref->mouse_up_callback(&evt);
 					}
 					break;
+				}
 			}
 			break;
 		}

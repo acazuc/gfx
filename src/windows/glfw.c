@@ -262,7 +262,8 @@ static void on_key_callback(GLFWwindow *win, int key, int scancode, int action, 
 	switch (action)
 	{
 		case GLFW_PRESS:
-			window->keys[key_code / 8] |= 1 << (key_code % 8);
+			if (key_code < sizeof(window->keys) * 8)
+				window->keys[key_code / 8] |= 1 << (key_code % 8);
 			if (window->key_down_callback)
 			{
 				gfx_key_event_t event;
@@ -273,7 +274,8 @@ static void on_key_callback(GLFWwindow *win, int key, int scancode, int action, 
 			}
 			break;
 		case GLFW_RELEASE:
-			window->keys[key_code / 8] &= ~(1 << (key_code % 8));
+			if (key_code < sizeof(window->keys) * 8)
+				window->keys[key_code / 8] &= ~(1 << (key_code % 8));
 			if (window->key_up_callback)
 			{
 				gfx_key_event_t event;
@@ -361,6 +363,8 @@ static void on_mouse_button_callback(GLFWwindow *win, int button, int action, in
 	switch (action)
 	{
 		case GLFW_PRESS:
+			if (button >= 0 && button < GFX_MOUSE_BUTTON_LAST)
+				window->mouse_buttons |= 1 << button;
 			if (window->mouse_down_callback)
 			{
 				gfx_mouse_event_t event;
@@ -373,6 +377,8 @@ static void on_mouse_button_callback(GLFWwindow *win, int button, int action, in
 			}
 			break;
 		case GLFW_RELEASE:
+			if (button >= 0 && button < GFX_MOUSE_BUTTON_LAST)
+				window->mouse_buttons &= ~(1 << button);
 			if (window->mouse_up_callback)
 			{
 				gfx_mouse_event_t event;

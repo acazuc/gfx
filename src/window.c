@@ -125,20 +125,14 @@ static bool ctr(gfx_window_t *window, gfx_window_properties_t *properties)
 	window->y = 0;
 	window->close_requested = false;
 	window->grabbed = false;
-	window->keys = GFX_MALLOC((GFX_KEY_LAST + 7) / 8);
-	if (!window->keys)
-	{
-		GFX_ERROR_CALLBACK("allocation failed");
-		return false;
-	}
-	memset(window->keys, 0, (GFX_KEY_LAST + 7) / 8);
+	memset(window->keys, 0, sizeof(window->keys));
+	window->mouse_buttons = 0;
 	window->device = NULL;
 	return true;
 }
 
 static void dtr(gfx_window_t *window)
 {
-	GFX_FREE(window->keys);
 	if (window->device)
 		gfx_device_delete(window->device);
 }
@@ -374,6 +368,13 @@ bool gfx_is_key_down(gfx_window_t *window, enum gfx_key_code key)
 	if (key >= GFX_KEY_LAST)
 		return false;
 	return window->keys[key / 8] & (1 << (key % 8));
+}
+
+bool gfx_is_mouse_button_down(gfx_window_t *window, enum gfx_mouse_button mouse_button)
+{
+	if (mouse_button >= GFX_MOUSE_BUTTON_LAST)
+		return false;
+	return window->mouse_buttons & (1 << mouse_button);
 }
 
 void gfx_window_properties_init(gfx_window_properties_t *properties)
