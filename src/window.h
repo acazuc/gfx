@@ -168,6 +168,7 @@ void gfx_set_mouse_position(gfx_window_t *window, int32_t x, int32_t y);
 int32_t gfx_get_mouse_x(gfx_window_t *window);
 int32_t gfx_get_mouse_y(gfx_window_t *window);
 bool gfx_is_key_down(gfx_window_t *window, enum gfx_key_code key);
+bool gfx_is_mouse_button_down(gfx_window_t *window, enum gfx_mouse_button mouse_button);
 
 void gfx_window_properties_init(gfx_window_properties_t *properties);
 
