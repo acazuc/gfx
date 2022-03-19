@@ -213,6 +213,15 @@ enum gfx_front_face
 	GFX_FRONT_CCW,
 };
 
+enum gfx_color_mask
+{
+	GFX_COLOR_MASK_R   = 0x1,
+	GFX_COLOR_MASK_G   = 0x2,
+	GFX_COLOR_MASK_B   = 0x4,
+	GFX_COLOR_MASK_A   = 0x8,
+	GFX_COLOR_MASK_ALL = 0xF,
+};
+
 typedef union gfx_native_handle_u
 {
 	struct
@@ -280,6 +289,7 @@ typedef struct gfx_blend_state_s
 	enum gfx_blend_equation equation_c;
 	enum gfx_blend_equation equation_a;
 	bool enabled;
+	enum gfx_color_mask color_mask;
 } gfx_blend_state_t;
 
 #define GFX_DEPTH_STENCIL_STATE_INIT() (gfx_depth_stencil_state_t){.handle = GFX_HANDLE_INIT}

@@ -15,7 +15,7 @@ typedef struct gfx_device_vtable_s
 	void (*draw_indexed)(gfx_device_t *device, uint32_t count, uint32_t offset);
 	void (*draw)(gfx_device_t *device, uint32_t count, uint32_t offset);
 
-	bool (*create_blend_state)(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a);
+	bool (*create_blend_state)(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a, enum gfx_color_mask color_mask);
 	void (*delete_blend_state)(gfx_device_t *device, gfx_blend_state_t *state);
 
 	bool (*create_depth_stencil_state)(gfx_device_t *device, gfx_depth_stencil_state_t *state, bool depth_write, bool depth_test, enum gfx_compare_function depth_compare, bool stencil_enabled, uint32_t stencil_write_mask, enum gfx_compare_function stencil_compare, uint32_t stencil_reference, uint32_t stencil_compare_mask, enum gfx_stencil_operation stencil_fail, enum gfx_stencil_operation stencil_zfail, enum gfx_stencil_operation stencil_pass);

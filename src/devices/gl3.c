@@ -96,6 +96,7 @@ typedef struct gfx_gl3_device_s
 	PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC CompressedTexSubImage3D;
 	PFNGLTEXIMAGE2DMULTISAMPLEPROC TexImage2DMultisample;
 	PFNGLTEXIMAGE3DMULTISAMPLEPROC TexImage3DMultisample;
+	PFNGLCOLORMASKPROC ColorMask;
 	enum gfx_primitive_type primitive;
 } gfx_gl3_device_t;
 
@@ -200,6 +201,7 @@ static bool gl3_ctr(gfx_device_t *device, gfx_window_t *window)
 	GL3_LOAD_PROC(CompressedTexSubImage3D);
 	GL3_LOAD_PROC(TexImage2DMultisample);
 	GL3_LOAD_PROC(TexImage3DMultisample);
+	GL3_LOAD_PROC(ColorMask);
 	return true;
 }
 
@@ -305,7 +307,7 @@ static void gl3_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 #endif
 }
 
-static bool gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
+static bool gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a, enum gfx_color_mask color_mask)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -317,6 +319,7 @@ static bool gl3_create_blend_state(gfx_device_t *device, gfx_blend_state_t *stat
 	state->dst_a = dst_a;
 	state->equation_c = equation_c;
 	state->equation_a = equation_a;
+	state->color_mask = color_mask;
 	return true;
 }
 
@@ -346,6 +349,11 @@ static void gl3_bind_blend_state(gfx_device_t *device, const gfx_blend_state_t *
 	else
 	{
 		gfx_gl_disable(device, GL_BLEND);
+	}
+	if (GL_DEVICE->color_mask != state->color_mask)
+	{
+		GL_DEVICE->color_mask = state->color_mask;
+		GL3_CALL(ColorMask, state->color_mask & GFX_COLOR_MASK_R, state->color_mask & GFX_COLOR_MASK_G, state->color_mask & GFX_COLOR_MASK_B, state->color_mask & GFX_COLOR_MASK_A);
 	}
 }
 

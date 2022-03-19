@@ -29,6 +29,7 @@ typedef struct gfx_gl_device_s
 	enum gfx_blend_function blend_src_a;
 	enum gfx_blend_function blend_dst_c;
 	enum gfx_blend_function blend_dst_a;
+	enum gfx_color_mask color_mask;
 	/* stencil */
 	enum gfx_stencil_operation stencil_fail;
 	enum gfx_stencil_operation stencil_pass;

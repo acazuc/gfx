@@ -129,6 +129,26 @@ static const VkFrontFace front_faces[] =
 	VK_FRONT_FACE_COUNTER_CLOCKWISE,
 };
 
+static const VkColorComponentFlagBits color_masks[] =
+{
+	0,
+	VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_G_BIT,
+	VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_B_BIT,
+	VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT,
+	VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_A_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_G_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_R_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT,
+	VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_R_BIT,
+};
+
 typedef struct gfx_vk_device_s
 {
 	gfx_device_t device;
@@ -716,7 +736,7 @@ static void vk_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 #endif
 }
 
-static bool vk_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
+static bool vk_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a, enum gfx_color_mask color_mask)
 {
 	assert(!state->handle.u64);
 	state->device = device;
@@ -728,6 +748,7 @@ static bool vk_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state
 	state->dst_a = dst_a;
 	state->equation_c = equation_c;
 	state->equation_a = equation_a;
+	state->color_mask = color_mask;
 	return true;
 }
 
@@ -1146,7 +1167,7 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	color_blend_attachment.srcAlphaBlendFactor = blend_functions[blend->src_a];
 	color_blend_attachment.dstAlphaBlendFactor = blend_functions[blend->dst_a];
 	color_blend_attachment.alphaBlendOp = blend_equations[blend->equation_a];
-	color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	color_blend_attachment.colorWriteMask = color_masks[blend->color_mask];
 
 	VkPipelineColorBlendStateCreateInfo color_blend_create_info;
 	color_blend_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

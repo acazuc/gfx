@@ -481,6 +481,7 @@ static bool gl_ctr(gfx_device_t *device, gfx_window_t *window)
 	GL_DEVICE->blend_src_a = GFX_BLEND_ONE;
 	GL_DEVICE->blend_dst_c = GFX_BLEND_ZERO;
 	GL_DEVICE->blend_dst_a = GFX_BLEND_ZERO;
+	GL_DEVICE->color_mask = GFX_COLOR_MASK_ALL,
 	GL_DEVICE->stencil_fail = GFX_STENCIL_KEEP;
 	GL_DEVICE->stencil_pass = GFX_STENCIL_KEEP;
 	GL_DEVICE->stencil_zfail = GFX_STENCIL_KEEP;

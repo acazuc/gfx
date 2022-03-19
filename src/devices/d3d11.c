@@ -117,8 +117,8 @@ static const D3D11_FILL_MODE fill_modes[3] =
 {
 	D3D11_FILL_WIREFRAME,
 	D3D11_FILL_WIREFRAME,
-	D3D11_FILL_SOLID},
-;
+	D3D11_FILL_SOLID,
+};
 
 static const D3D11_CULL_MODE cull_modes[3] =
 {
@@ -204,6 +204,26 @@ static const D3D11_FILTER filtering[27] =
 	D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR,
 	D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR,
 	D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+};
+
+static const uint8_t color_masks[16] =
+{
+	0,
+	D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_GREEN,
+	D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_BLUE,
+	D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_GREEN,
+	D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_GREEN,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_BLUE,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_RED,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_GREEN,
+	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_RED,
 };
 
 static UINT row_pitches[14] =
@@ -342,7 +362,7 @@ static bool create_default_depth_stencil_view(gfx_device_t *device)
 	HRESULT result = ID3D11Device_CreateTexture2D(D3D11_DEVICE->d3ddev, &tex_desc, NULL, &depth_stencil_buffer);
 	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create default depth stencil texture: %s (%d)", d3d11_err2str(result), result);
+		GFX_ERROR_CALLBACK("failed to create default depth stencil texture: %s (%d)", d3d11_err2str(result), (int)result);
 		goto err;
 	}
 
@@ -352,7 +372,7 @@ static bool create_default_depth_stencil_view(gfx_device_t *device)
 	result = ID3D11Device_CreateDepthStencilView(D3D11_DEVICE->d3ddev, (ID3D11Resource*)depth_stencil_buffer, &view_desc, &D3D11_DEVICE->default_depth_stencil_view);
 	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create default depth stencil view: %s (%d)", d3d11_err2str(result), result);
+		GFX_ERROR_CALLBACK("failed to create default depth stencil view: %s (%d)", d3d11_err2str(result), (int)result);
 		goto err;
 	}
 	ID3D11Texture2D_Release(depth_stencil_buffer);
@@ -511,7 +531,7 @@ static void d3d11_draw(gfx_device_t *device, uint32_t count, uint32_t offset)
 #endif
 }
 
-static bool d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a)
+static bool d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *state, bool enabled, enum gfx_blend_function src_c, enum gfx_blend_function dst_c, enum gfx_blend_function src_a, enum gfx_blend_function dst_a, enum gfx_blend_equation equation_c, enum gfx_blend_equation equation_a, enum gfx_color_mask color_mask)
 {
 	assert(!state->handle.ptr);
 	state->device = device;
@@ -522,6 +542,7 @@ static bool d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *st
 	state->dst_a = dst_a;
 	state->equation_c = equation_c;
 	state->equation_a = equation_a;
+	state->color_mask = color_mask;
 	D3D11_BLEND_DESC desc;
 	desc.AlphaToCoverageEnable = false;
 	desc.IndependentBlendEnable = false;
@@ -534,7 +555,7 @@ static bool d3d11_create_blend_state(gfx_device_t *device, gfx_blend_state_t *st
 		desc.RenderTarget[i].SrcBlendAlpha = blend_functions[src_a];
 		desc.RenderTarget[i].DestBlendAlpha = blend_functions[dst_a];
 		desc.RenderTarget[i].BlendOpAlpha = blend_equations[equation_a];
-		desc.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		desc.RenderTarget[i].RenderTargetWriteMask = color_masks[color_mask];
 	}
 	D3D11_CALL(ID3D11Device_CreateBlendState, D3D11_DEVICE->d3ddev, &desc, (ID3D11BlendState**)&state->handle.ptr);
 	return true; /* XXX */
@@ -1399,7 +1420,7 @@ gfx_device_t *gfx_d3d11_device_new(gfx_window_t *window, DXGI_SWAP_CHAIN_DESC *s
 	HRESULT result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flags, &feature_level, 1, D3D11_SDK_VERSION, swap_chain_desc, swap_chain, (ID3D11Device**)&device->d3ddev, NULL, (ID3D11DeviceContext**)&device->d3dctx);
 	if (FAILED(result))
 	{
-		GFX_ERROR_CALLBACK("failed to create d3d device: %s (%d)", d3d11_err2str(result), result);
+		GFX_ERROR_CALLBACK("failed to create d3d device: %s (%d)", d3d11_err2str(result), (int)result);
 		goto err;
 	}
 	device->swap_chain = *swap_chain;
