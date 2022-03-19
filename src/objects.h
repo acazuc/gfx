@@ -215,11 +215,12 @@ enum gfx_front_face
 
 enum gfx_color_mask
 {
-	GFX_COLOR_MASK_R   = 0x1,
-	GFX_COLOR_MASK_G   = 0x2,
-	GFX_COLOR_MASK_B   = 0x4,
-	GFX_COLOR_MASK_A   = 0x8,
-	GFX_COLOR_MASK_ALL = 0xF,
+	GFX_COLOR_MASK_NONE = 0x0,
+	GFX_COLOR_MASK_R    = 0x1,
+	GFX_COLOR_MASK_G    = 0x2,
+	GFX_COLOR_MASK_B    = 0x4,
+	GFX_COLOR_MASK_A    = 0x8,
+	GFX_COLOR_MASK_ALL  = 0xF,
 };
 
 typedef union gfx_native_handle_u
