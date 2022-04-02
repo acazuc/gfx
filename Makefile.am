@@ -37,6 +37,15 @@ WIN_X11_SRC = src/windows/x11.c
 WIN_X11_LD = -lX11 -lXi -lXcursor
 endif
 
+if WINDOW_EGL
+WIN_EGL_SRC = src/windows/egl.c
+endif
+
+if WINDOW_WL
+WIN_WL_SRC = src/windows/wayland.c
+WIN_WL_LD = -lwayland
+endif
+
 if WINDOW_GL
 WIN_GL_SRC = src/windows/gl.c
 WIN_GL_LD = -lGL
@@ -64,6 +73,11 @@ WIN_VK_X11_SRC = src/windows/vk_x11.c
 WIN_VK_X11_LD = -lvulkan
 endif
 
+if WINDOW_VK_WL
+WIN_VK_WL_SRC = src/windows/vk_wl.c
+WIN_VK_WL_LD = -lvulkan
+endif
+
 if WINDOW_VK_WIN32
 WIN_VK_WIN32_SRC = src/windows/vk_win32.c
 WIN_VK_WIN32_LD = -lvulkan
@@ -74,11 +88,12 @@ libgfx_la_SOURCES = src/device.c src/window.c \
                     $(DEV_D3D_SRC) $(DEV_D3D9_SRC) $(DEV_D3D11_SRC) \
                     $(DEV_VK_SRC) $(WIN_GLX_SRC) $(WIN_X11_SRC) \
                     $(WIN_GLFW_SRC) $(WIN_WGL_SRC) $(WIN_WIN32_SRC) \
-                    $(WIN_D3D_SRC) $(WIN_GL_SRC) $(WIN_VK_X11_SRC) \
+                    $(WIN_D3D_SRC) $(WIN_GL_SRC) $(WIN_WL_SRC) \
+                    $(WIN_EGL_SRC)  $(WIN_VK_X11_SRC) $(WIN_VK_WL_SRC) \
                     $(WIN_VK_WIN32_SRC)
 
-libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) \
-                    $(WIN_VK_X11_LD) $(WIN_VK_WIN32_LD)
+libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) $(WIN_WL_LD) \
+                    $(WIN_VK_X11_LD) $(WIN_VK_WIN32_LD) $(WIN_VK_WL_LD)
 
 pkgincludedir = $(includedir)/gfx
 pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h

@@ -8,7 +8,6 @@ typedef struct gfx_win32_window_s
 {
 	gfx_window_t *winref;
 	HINSTANCE hinstance;
-	LPCSTR application_name;
 	HCURSOR cursor;
 	HWND window;
 	int32_t prev_mouse_x;

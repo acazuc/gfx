@@ -76,7 +76,7 @@ AM_CONDITIONAL(DEVICE_D3D11, test "x$device_d3d11" = "xtrue")
 # Vulkan
 ############
 AC_ARG_ENABLE(device-vk,
-	[  --enable-device-vk     Turn on Vulkan device backend],
+	[  --enable-device-vk      Turn on Vulkan device backend],
 	[case "${enableval}" in
 		yes) device_vk=true ;;
 		no)  device_vk=false ;;
@@ -93,6 +93,8 @@ AM_CONDITIONAL(DEVICE_VK, test "x$device_vk" = "xtrue")
 ############
 # Windows
 ############
+
+#X11
 AC_ARG_ENABLE(window-x11,
 	[  --enable-window-x11     Turn on X11 window backend],
 	[case "${enableval}" in
@@ -108,8 +110,9 @@ then
 fi
 AM_CONDITIONAL(WINDOW_X11, test "x$window_x11" = "xtrue")
 
+#win32
 AC_ARG_ENABLE(window-win32,
-	[  --enable-window-win32     Turn on WIN32 window backend],
+	[  --enable-window-win32   Turn on WIN32 window backend],
 	[case "${enableval}" in
 		yes) window_win32=true ;;
 		no)  window_win32=false ;;
@@ -123,6 +126,23 @@ then
 fi
 AM_CONDITIONAL(WINDOW_WIN32, test "x$window_win32" = "xtrue")
 
+#wayland
+AC_ARG_ENABLE(window-wl,
+	[  --enable-window-wl      Turn on Wayland window backend],
+	[case "${enableval}" in
+		yes) window_wl=true ;;
+		no)  window_wl=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-window-wl) ;;
+	esac],
+	[window_wl=false]
+)
+if test "x$window_wl" != "xfalse"
+then
+  AC_DEFINE([GFX_ENABLE_WINDOW_WL], [1], [Define to enable Wayland window backend])
+fi
+AM_CONDITIONAL(WINDOW_WL, test "x$window_wl" = "xtrue")
+
+#glfw
 AC_ARG_ENABLE(window-glfw,
 	[  --enable-window-glfw    Turn on GLFW window backend],
 	[case "${enableval}" in
@@ -141,12 +161,14 @@ AM_CONDITIONAL(WINDOW_GLFW, test "x$window_glfw" = "xtrue")
 # Aggregate for individual files
 AM_CONDITIONAL(DEVICE_GL, test "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(DEVICE_D3D, test "x$device_d3d9$device_d3d11" != "xfalsefalse")
-AM_CONDITIONAL(WINDOW_GL, test "x$window_glfw$window_x11$window_win32" != "xfalsefalsefalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
+AM_CONDITIONAL(WINDOW_GL, test "x$window_glfw$window_x11$window_win32$window_wl" != "xfalsefalsefalsefalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_GLX, test "x$window_x11" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
+AM_CONDITIONAL(WINDOW_EGL, test "x$window_wl" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_WGL, test "x$window_win32" != "xfalse" -a "x$device_gl3$device_gl4" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_D3D, test "x$window_win32" != "xfalse" -a "x$device_d3d9$device_d3d11" != "xfalsefalse")
 AM_CONDITIONAL(WINDOW_VK_X11, test "x$window_x11" != "xfalse" -a "x$device_vk" != "xfalse")
 AM_CONDITIONAL(WINDOW_VK_WIN32, test "x$window_win32" != "xfalse" -a "x$device_vk" != "xfalse")
+AM_CONDITIONAL(WINDOW_VK_WL, test "x$window_win32" != "xfalse" -a "x$device_vk" != "xfalse")
 
 AC_ARG_WITH([jks],
 	[AS_HELP_STRING([--without-jks],
