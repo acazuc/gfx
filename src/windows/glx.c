@@ -188,8 +188,7 @@ static GLXFBConfig *get_configs(gfx_window_t *window, gfx_window_properties_t *p
 	attributes[attributes_nb++] = True;
 	attributes[attributes_nb++] = None;
 	int configs_count;
-	GLXFBConfig *configs = glXChooseFBConfig(X11_WINDOW->display, 0, attributes, &configs_count);
-	return configs;
+	return glXChooseFBConfig(X11_WINDOW->display, 0, attributes, &configs_count);
 }
 
 static GLXContext create_context(gfx_window_t *window, gfx_window_properties_t *properties, XVisualInfo *vi, GLXFBConfig *configs)
