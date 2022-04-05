@@ -170,7 +170,8 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		GFX_ERROR_CALLBACK("failed to create window");
 		goto err;
 	}
-	if (!(WGL_WINDOW->device = GetDC(WIN32_WINDOW->window)))
+	WGL_WINDOW->device = GetDC(WIN32_WINDOW->window);
+	if (!WGL_WINDOW->device);
 	{
 		GFX_ERROR_CALLBACK("GetDC failed");
 		goto err;
@@ -199,6 +200,11 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		int pformat = ChoosePixelFormat(WGL_WINDOW->device, &pfd);
 		SetPixelFormat(WGL_WINDOW->device, pformat, &pfd);
 		tmp_ctx = wglCreateContext(WGL_WINDOW->device);
+		if (!tmp_ctx)
+		{
+			GFX_ERROR_CALLBACK("wglCreateContext failed: %u", (unsigned)GetLastError());
+			goto err;
+		}
 		wglMakeCurrent(WGL_WINDOW->device, tmp_ctx);
 	}
 	WGL_WINDOW->wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
@@ -220,17 +226,15 @@ gfx_window_t *gfx_wgl_window_new(const char *title, uint32_t width, uint32_t hei
 		memset(&pfd, 0, sizeof(pfd));
 		pfd.nSize = sizeof(pfd);
 		pfd.nVersion = 1;
-		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
-		if (properties->double_buffer)
-			pfd.dwFlags |= PFD_DOUBLEBUFFER;
+		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
 		pfd.iPixelType = PFD_TYPE_RGBA;
-		if (properties->alpha_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-			pfd.cAlphaBits = properties->alpha_bits;
-		pfd.cColorBits = 32;
-		if (properties->depth_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-			pfd.cDepthBits = properties->depth_bits;
-		if (properties->stencil_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-			pfd.cStencilBits = properties->stencil_bits;
+		pfd.cColorBits = properties->red_bits + properties->green_bits + properties->blue_bits + properties->alpha_bits;
+		pfd.cRedBits = properties->red_bits;
+		pfd.cGreenBits = properties->green_bits;
+		pfd.cBlueBits = properties->blue_bits;
+		pfd.cAlphaBits = properties->alpha_bits;
+		pfd.cDepthBits = properties->depth_bits;
+		pfd.cStencilBits = properties->stencil_bits;
 		pfd.iLayerType = PFD_MAIN_PLANE;
 		int pformat = ChoosePixelFormat(WGL_WINDOW->device, &pfd);
 		SetPixelFormat(WGL_WINDOW->device, pformat, &pfd);

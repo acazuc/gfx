@@ -60,7 +60,7 @@ static bool vk_x11_create_device(gfx_window_t *window)
 				result = vkCreateInstance(&create_info, NULL, &instance);
 				if (result != VK_SUCCESS)
 				{
-					GFX_ERROR_CALLBACK("can't create vulkan instance");
+					GFX_ERROR_CALLBACK("can't create x11 vulkan instance");
 					return false;
 				}
 			}
@@ -74,7 +74,7 @@ static bool vk_x11_create_device(gfx_window_t *window)
 				result = vkCreateXlibSurfaceKHR(instance, &create_info, NULL, &surface);
 				if (result != VK_SUCCESS)
 				{
-					GFX_ERROR_CALLBACK("can't create vulkan surface");
+					GFX_ERROR_CALLBACK("can't create x11 vulkan surface");
 					vkDestroyInstance(instance, NULL);
 					return false;
 				}

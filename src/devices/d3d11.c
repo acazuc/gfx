@@ -19,14 +19,14 @@
 
 DEFINE_GUID(UIID_ID3D11Texture2D, 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c);
 
-static const D3D11_PRIMITIVE_TOPOLOGY primitives[3] =
+static const D3D11_PRIMITIVE_TOPOLOGY primitives[] =
 {
 	D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 	D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
 	D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
 };
 
-static const DXGI_FORMAT attribute_types[34] =
+static const DXGI_FORMAT attribute_types[] =
 {
 	DXGI_FORMAT_R32G32B32A32_FLOAT,
 	DXGI_FORMAT_R32G32B32A32_UINT,
@@ -64,7 +64,7 @@ static const DXGI_FORMAT attribute_types[34] =
 	DXGI_FORMAT_R8_SINT,
 };
 
-static const D3D11_COMPARISON_FUNC compare_functions[8] =
+static const D3D11_COMPARISON_FUNC compare_functions[] =
 {
 	D3D11_COMPARISON_NEVER,
 	D3D11_COMPARISON_LESS,
@@ -76,7 +76,7 @@ static const D3D11_COMPARISON_FUNC compare_functions[8] =
 	D3D11_COMPARISON_ALWAYS,
 };
 
-static const D3D11_BLEND blend_functions[12] =
+static const D3D11_BLEND blend_functions[] =
 {
 	D3D11_BLEND_ZERO,
 	D3D11_BLEND_ONE,
@@ -92,7 +92,7 @@ static const D3D11_BLEND blend_functions[12] =
 	D3D11_BLEND_INV_SRC1_COLOR,
 };
 
-static const D3D11_BLEND_OP blend_equations[5] =
+static const D3D11_BLEND_OP blend_equations[] =
 {
 	D3D11_BLEND_OP_ADD,
 	D3D11_BLEND_OP_SUBTRACT,
@@ -101,7 +101,7 @@ static const D3D11_BLEND_OP blend_equations[5] =
 	D3D11_BLEND_OP_MAX,
 };
 
-static const D3D11_STENCIL_OP stencil_operations[8] =
+static const D3D11_STENCIL_OP stencil_operations[] =
 {
 	D3D11_STENCIL_OP_KEEP,
 	D3D11_STENCIL_OP_ZERO,
@@ -113,28 +113,28 @@ static const D3D11_STENCIL_OP stencil_operations[8] =
 	D3D11_STENCIL_OP_INVERT,
 };
 
-static const D3D11_FILL_MODE fill_modes[3] =
+static const D3D11_FILL_MODE fill_modes[] =
 {
 	D3D11_FILL_WIREFRAME,
 	D3D11_FILL_WIREFRAME,
 	D3D11_FILL_SOLID,
 };
 
-static const D3D11_CULL_MODE cull_modes[3] =
+static const D3D11_CULL_MODE cull_modes[] =
 {
 	D3D11_CULL_BACK,
 	D3D11_CULL_FRONT,
 	D3D11_CULL_BACK,
 };
 
-static const D3D11_BIND_FLAG buffer_types[3] =
+static const D3D11_BIND_FLAG buffer_types[] =
 {
 	D3D11_BIND_VERTEX_BUFFER,
 	D3D11_BIND_INDEX_BUFFER,
 	D3D11_BIND_CONSTANT_BUFFER,
 };
 
-static const D3D11_USAGE buffer_usages[4] =
+static const D3D11_USAGE buffer_usages[] =
 {
 	D3D11_USAGE_IMMUTABLE,
 	D3D11_USAGE_DEFAULT,
@@ -142,7 +142,7 @@ static const D3D11_USAGE buffer_usages[4] =
 	D3D11_USAGE_DYNAMIC,
 };
 
-static const DXGI_FORMAT formats[14] =
+static const DXGI_FORMAT formats[] =
 {
 	DXGI_FORMAT_D24_UNORM_S8_UINT,
 	DXGI_FORMAT_R32G32B32A32_FLOAT,
@@ -160,7 +160,7 @@ static const DXGI_FORMAT formats[14] =
 	DXGI_FORMAT_BC3_UNORM,
 };
 
-static const D3D11_TEXTURE_ADDRESS_MODE texture_addressings[5] =
+static const D3D11_TEXTURE_ADDRESS_MODE texture_addressings[] =
 {
 	D3D11_TEXTURE_ADDRESS_CLAMP,
 	D3D11_TEXTURE_ADDRESS_WRAP,
@@ -169,13 +169,13 @@ static const D3D11_TEXTURE_ADDRESS_MODE texture_addressings[5] =
 	D3D11_TEXTURE_ADDRESS_MIRROR_ONCE,
 };
 
-static const DXGI_FORMAT index_types[2] =
+static const DXGI_FORMAT index_types[] =
 {
 	DXGI_FORMAT_R16_UINT,
 	DXGI_FORMAT_R32_UINT,
 };
 
-static const D3D11_FILTER filtering[27] =
+static const D3D11_FILTER filtering[] =
 {
 	D3D11_FILTER_MIN_MAG_MIP_POINT,
 	D3D11_FILTER_MIN_MAG_MIP_POINT,
@@ -206,7 +206,7 @@ static const D3D11_FILTER filtering[27] =
 	D3D11_FILTER_MIN_MAG_MIP_LINEAR,
 };
 
-static const uint8_t color_masks[16] =
+static const uint8_t color_masks[] =
 {
 	0,
 	D3D11_COLOR_WRITE_ENABLE_RED,
@@ -226,7 +226,7 @@ static const uint8_t color_masks[16] =
 	D3D11_COLOR_WRITE_ENABLE_ALPHA | D3D11_COLOR_WRITE_ENABLE_BLUE | D3D11_COLOR_WRITE_ENABLE_GREEN | D3D11_COLOR_WRITE_ENABLE_RED,
 };
 
-static UINT row_pitches[14] =
+static UINT row_pitches[] =
 {
 	4,
 	16,

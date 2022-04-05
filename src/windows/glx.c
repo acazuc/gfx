@@ -172,80 +172,54 @@ static GLXFBConfig *get_configs(gfx_window_t *window, gfx_window_properties_t *p
 	attributes[attributes_nb++] = True;
 	attributes[attributes_nb++] = GLX_DRAWABLE_TYPE;
 	attributes[attributes_nb++] = GLX_WINDOW_BIT;
-	if (properties->depth_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_DEPTH_SIZE;
-		attributes[attributes_nb++] = properties->depth_bits;
-	}
-	if (properties->stencil_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_STENCIL_SIZE;
-		attributes[attributes_nb++] = properties->stencil_bits;
-	}
-	if (properties->red_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_RED_SIZE;
-		attributes[attributes_nb++] = properties->red_bits;
-	}
-	if (properties->green_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_GREEN_SIZE;
-		attributes[attributes_nb++] = properties->green_bits;
-	}
-	if (properties->blue_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_BLUE_SIZE;
-		attributes[attributes_nb++] = properties->blue_bits;
-	}
-	if (properties->alpha_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_ALPHA_SIZE;
-		attributes[attributes_nb++] = properties->alpha_bits;
-	}
-	if (properties->double_buffer != GFX_WINDOW_PROPERTY_DONT_CARE)
-	{
-		attributes[attributes_nb++] = GLX_DOUBLEBUFFER;
-		attributes[attributes_nb++] = properties->double_buffer ? True : False;
-	}
-	attributes[attributes_nb++] = None;
+	attributes[attributes_nb++] = GLX_DEPTH_SIZE;
+	attributes[attributes_nb++] = properties->depth_bits;
+	attributes[attributes_nb++] = GLX_STENCIL_SIZE;
+	attributes[attributes_nb++] = properties->stencil_bits;
+	attributes[attributes_nb++] = GLX_RED_SIZE;
+	attributes[attributes_nb++] = properties->red_bits;
+	attributes[attributes_nb++] = GLX_GREEN_SIZE;
+	attributes[attributes_nb++] = properties->green_bits;
+	attributes[attributes_nb++] = GLX_BLUE_SIZE;
+	attributes[attributes_nb++] = properties->blue_bits;
+	attributes[attributes_nb++] = GLX_ALPHA_SIZE;
+	attributes[attributes_nb++] = properties->alpha_bits;
+	attributes[attributes_nb++] = GLX_DOUBLEBUFFER;
+	attributes[attributes_nb++] = True;
 	attributes[attributes_nb++] = None;
 	int configs_count;
 	GLXFBConfig *configs = glXChooseFBConfig(X11_WINDOW->display, 0, attributes, &configs_count);
 	return configs;
 }
 
-static void create_context(gfx_window_t *window, gfx_window_properties_t *properties, XVisualInfo *vi, GLXFBConfig *configs)
+static GLXContext create_context(gfx_window_t *window, gfx_window_properties_t *properties, XVisualInfo *vi, GLXFBConfig *configs)
 {
-	if (GLX_WINDOW->glXCreateContextAttribsARB)
-	{
-		int attributes[10];
-		int attributes_nb = 0;
+	if (!GLX_WINDOW->glXCreateContextAttribsARB)
+		return glXCreateContext(X11_WINDOW->display, vi, NULL, true);
+
+	int attributes[10];
+	int attributes_nb = 0;
 #ifdef GFX_ENABLE_DEVICE_GL3
-		if (properties->device_backend == GFX_DEVICE_GL3)
-		{
-			attributes[attributes_nb++] = GLX_CONTEXT_MAJOR_VERSION_ARB;
-			attributes[attributes_nb++] = 3;
-			attributes[attributes_nb++] = GLX_CONTEXT_MINOR_VERSION_ARB;
-			attributes[attributes_nb++] = 3;
-		}
+	if (properties->device_backend == GFX_DEVICE_GL3)
+	{
+		attributes[attributes_nb++] = GLX_CONTEXT_MAJOR_VERSION_ARB;
+		attributes[attributes_nb++] = 3;
+		attributes[attributes_nb++] = GLX_CONTEXT_MINOR_VERSION_ARB;
+		attributes[attributes_nb++] = 3;
+	}
 #endif
 #ifdef GFX_ENABLE_DEVICE_GL4
-		if (properties->device_backend == GFX_DEVICE_GL4)
-		{
-			attributes[attributes_nb++] = GLX_CONTEXT_MAJOR_VERSION_ARB;
-			attributes[attributes_nb++] = 4;
-			attributes[attributes_nb++] = GLX_CONTEXT_MINOR_VERSION_ARB;
-			attributes[attributes_nb++] = 5;
-		}
-#endif
-		attributes[attributes_nb++] = None;
-		attributes[attributes_nb++] = None;
-		GLX_WINDOW->context = GLX_WINDOW->glXCreateContextAttribsARB(X11_WINDOW->display, configs[0], NULL, true, attributes);
-	}
-	else
+	if (properties->device_backend == GFX_DEVICE_GL4)
 	{
-		GLX_WINDOW->context = glXCreateContext(X11_WINDOW->display, vi, NULL, true);
+		attributes[attributes_nb++] = GLX_CONTEXT_MAJOR_VERSION_ARB;
+		attributes[attributes_nb++] = 4;
+		attributes[attributes_nb++] = GLX_CONTEXT_MINOR_VERSION_ARB;
+		attributes[attributes_nb++] = 5;
 	}
+#endif
+	attributes[attributes_nb++] = None;
+	attributes[attributes_nb++] = None;
+	return GLX_WINDOW->glXCreateContextAttribsARB(X11_WINDOW->display, configs[0], NULL, true, attributes);
 }
 
 gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
@@ -265,15 +239,33 @@ gfx_window_t *gfx_glx_window_new(const char *title, uint32_t width, uint32_t hei
 	load_extensions(window);
 	configs = get_configs(window, properties);
 	if (!configs)
+	{
+		GFX_ERROR_CALLBACK("failed to get glx configs");
 		goto err;
+	}
 	vi = glXGetVisualFromFBConfig(X11_WINDOW->display, configs[0]);
+	if (!vi)
+	{
+		GFX_ERROR_CALLBACK("failed to get glx vi");
+		goto err;
+	}
 	if (!gfx_x11_create_window(X11_WINDOW, title, width, height, vi))
 	{
-		GFX_ERROR_CALLBACK("failed to create window");
+		GFX_ERROR_CALLBACK("failed to create x11 window");
 		goto err;
 	}
 	GLX_WINDOW->window = glXCreateWindow(X11_WINDOW->display, configs[0], X11_WINDOW->window, NULL);
-	create_context(window, properties, vi, configs);
+	if (!GLX_WINDOW->window)
+	{
+		GFX_ERROR_CALLBACK("failed to create glx window");
+		goto err;
+	}
+	GLX_WINDOW->context = create_context(window, properties, vi, configs);
+	if (!GLX_WINDOW->context)
+	{
+		GFX_ERROR_CALLBACK("failed to create glx context");
+		goto err;
+	}
 	XFree(configs);
 	XFree(vi);
 	return window;

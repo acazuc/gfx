@@ -186,34 +186,28 @@ static const gfx_window_vtable_t glfw_vtable =
 gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t height, gfx_window_properties_t *properties)
 {
 	if (!glfwInit())
+	{
+		GFX_ERROR_CALLBACK("failed to initialize glfw");
 		return NULL;
+	}
 	gfx_window_t *window = GFX_MALLOC(sizeof(gfx_glfw_window_t));
 	if (!window)
+	{
+		GFX_ERROR_CALLBACK("allocation failed");
 		return NULL;
+	}
 	memset(window, 0, sizeof(gfx_glfw_window_t));
 	window->vtable = &glfw_vtable;
 	if (!window->vtable->ctr(window, properties))
 		goto err;
 	glfwDefaultWindowHints();
-	if (properties->depth_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_DEPTH_BITS, properties->depth_bits);
-	if (properties->stencil_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_STENCIL_BITS, properties->stencil_bits);
-	if (properties->red_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_RED_BITS, properties->red_bits);
-	if (properties->green_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_GREEN_BITS, properties->green_bits);
-	if (properties->blue_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_BLUE_BITS, properties->blue_bits);
-	if (properties->alpha_bits != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_ALPHA_BITS, properties->alpha_bits);
-	glfwWindowHint(GLFW_SAMPLES, properties->samples);
-	if (properties->srgb != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_SRGB_CAPABLE, properties->srgb ? GLFW_TRUE : GLFW_FALSE);
-	if (properties->double_buffer != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_DOUBLEBUFFER, properties->double_buffer ? GLFW_TRUE : GLFW_FALSE);
-	if (properties->stereo != GFX_WINDOW_PROPERTY_DONT_CARE)
-		glfwWindowHint(GLFW_STEREO, properties->stereo ? GLFW_TRUE : GLFW_FALSE);
+	glfwWindowHint(GLFW_DEPTH_BITS, properties->depth_bits);
+	glfwWindowHint(GLFW_STENCIL_BITS, properties->stencil_bits);
+	glfwWindowHint(GLFW_RED_BITS, properties->red_bits);
+	glfwWindowHint(GLFW_GREEN_BITS, properties->green_bits);
+	glfwWindowHint(GLFW_BLUE_BITS, properties->blue_bits);
+	glfwWindowHint(GLFW_ALPHA_BITS, properties->alpha_bits);
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 #ifdef GFX_ENABLE_DEVICE_GL3
 	if (properties->device_backend == GFX_DEVICE_GL3)
 	{
@@ -233,7 +227,10 @@ gfx_window_t *gfx_glfw_window_new(const char *title, uint32_t width, uint32_t he
 	window->height = height;
 	GLFW_WINDOW->window = glfwCreateWindow(width, height, title, NULL, NULL);
 	if (!GLFW_WINDOW->window)
+	{
+		GFX_ERROR_CALLBACK("failed to create glfw window");
 		goto err;
+	}
 	glfwSetWindowUserPointer(GLFW_WINDOW->window, window);
 	glfwSetKeyCallback(GLFW_WINDOW->window, on_key_callback);
 	glfwSetCharCallback(GLFW_WINDOW->window, on_character_callback);

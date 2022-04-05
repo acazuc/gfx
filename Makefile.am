@@ -39,11 +39,12 @@ endif
 
 if WINDOW_EGL
 WIN_EGL_SRC = src/windows/egl.c
+WIN_EGL_LD = -lEGL
 endif
 
 if WINDOW_WL
-WIN_WL_SRC = src/windows/wayland.c
-WIN_WL_LD = -lwayland
+WIN_WL_SRC = src/windows/wl.c
+WIN_WL_LD = -lwayland-client
 endif
 
 if WINDOW_GL
@@ -93,7 +94,8 @@ libgfx_la_SOURCES = src/device.c src/window.c \
                     $(WIN_VK_WIN32_SRC)
 
 libgfx_la_LDFLAGS = -ljks $(GLFW_LD) $(WIN_X11_LD) $(WIN_GL_LD) $(WIN_WL_LD) \
-                    $(WIN_VK_X11_LD) $(WIN_VK_WIN32_LD) $(WIN_VK_WL_LD)
+                    $(WIN_VK_X11_LD) $(WIN_VK_WIN32_LD) $(WIN_VK_WL_LD) \
+                    $(WIN_EGL_LD)
 
 pkgincludedir = $(includedir)/gfx
 pkginclude_HEADERS = src/device.h src/events.h src/objects.h src/window.h

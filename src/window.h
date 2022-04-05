@@ -89,19 +89,13 @@ typedef struct gfx_window_properties_s
 {
 	enum gfx_window_backend window_backend;
 	enum gfx_device_backend device_backend;
-	int8_t depth_bits;
-	int8_t stencil_bits;
-	int8_t red_bits;
-	int8_t green_bits;
-	int8_t blue_bits;
-	int8_t alpha_bits;
-	int8_t samples;
-	int8_t srgb;
-	int8_t double_buffer;
-	int8_t stereo;
+	uint8_t stencil_bits;
+	uint8_t depth_bits;
+	uint8_t red_bits;
+	uint8_t green_bits;
+	uint8_t blue_bits;
+	uint8_t alpha_bits;
 } gfx_window_properties_t;
-
-static const int GFX_WINDOW_PROPERTY_DONT_CARE = -1;
 
 typedef struct gfx_window_vtable_s gfx_window_vtable_t;
 

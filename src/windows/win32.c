@@ -47,12 +47,14 @@ bool gfx_win32_create_window(gfx_win32_window_t *window, const char *title, uint
 	WNDCLASSEX wc;
 	int pos_x, pos_y;
 
-	if (!(window->classname = strdup(title)))
+	window->classname = strdup(title);
+	if (!window->classname)
 	{
 		GFX_ERROR_CALLBACK("strdup failed");
 		return false;
 	}
-	if (!(window->hinstance = GetModuleHandle(NULL)))
+	window->hinstance = GetModuleHandle(NULL);
+	if (!window->hinstance)
 	{
 		GFX_ERROR_CALLBACK("GetModuleHandle failed");
 		return false;

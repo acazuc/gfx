@@ -15,20 +15,20 @@
 # define GL_R 0x2002
 #endif
 
-const GLuint gfx_gl_primitives[3] =
+const GLuint gfx_gl_primitives[] =
 {
 	GL_TRIANGLES,
 	GL_POINTS,
 	GL_LINES,
 };
 
-const GLenum gfx_gl_index_types[2] =
+const GLenum gfx_gl_index_types[] =
 {
 	GL_UNSIGNED_SHORT,
 	GL_UNSIGNED_INT,
 };
 
-const GLenum gfx_gl_compare_functions[8] =
+const GLenum gfx_gl_compare_functions[] =
 {
 	GL_NEVER,
 	GL_LESS,
@@ -40,7 +40,7 @@ const GLenum gfx_gl_compare_functions[8] =
 	GL_ALWAYS,
 };
 
-const GLenum gfx_gl_blend_functions[12] =
+const GLenum gfx_gl_blend_functions[] =
 {
 	GL_ZERO,
 	GL_ONE,
@@ -56,7 +56,7 @@ const GLenum gfx_gl_blend_functions[12] =
 	GL_ONE_MINUS_CONSTANT_COLOR,
 };
 
-const GLenum gfx_gl_blend_equations[5] =
+const GLenum gfx_gl_blend_equations[] =
 {
 	GL_FUNC_ADD,
 	GL_FUNC_SUBTRACT,
@@ -65,7 +65,7 @@ const GLenum gfx_gl_blend_equations[5] =
 	GL_MAX,
 };
 
-const GLenum gfx_gl_stencil_operations[8] =
+const GLenum gfx_gl_stencil_operations[] =
 {
 	GL_KEEP,
 	GL_ZERO,
@@ -77,41 +77,41 @@ const GLenum gfx_gl_stencil_operations[8] =
 	GL_INVERT,
 };
 
-const GLenum gfx_gl_fill_modes[3] =
+const GLenum gfx_gl_fill_modes[] =
 {
 	GL_POINT,
 	GL_LINE,
 	GL_FILL,
 };
 
-const GLenum gfx_gl_front_faces[2] =
+const GLenum gfx_gl_front_faces[] =
 {
 	GL_CW,
 	GL_CCW,
 };
 
-const GLenum gfx_gl_cull_modes[3] =
+const GLenum gfx_gl_cull_modes[] =
 {
 	GL_BACK,
 	GL_FRONT,
 	GL_BACK,
 };
 
-const GLenum gfx_gl_shader_types[3] =
+const GLenum gfx_gl_shader_types[] =
 {
 	GL_VERTEX_SHADER,
 	GL_FRAGMENT_SHADER,
 	GL_GEOMETRY_SHADER,
 };
 
-const GLenum gfx_gl_buffer_types[3] =
+const GLenum gfx_gl_buffer_types[] =
 {
 	GL_ARRAY_BUFFER,
 	GL_ELEMENT_ARRAY_BUFFER,
 	GL_UNIFORM_BUFFER,
 };
 
-const GLenum gfx_gl_texture_types[5] =
+const GLenum gfx_gl_texture_types[] =
 {
 	GL_TEXTURE_2D,
 	GL_TEXTURE_2D_MULTISAMPLE,
@@ -120,7 +120,7 @@ const GLenum gfx_gl_texture_types[5] =
 	GL_TEXTURE_3D,
 };
 
-const GLenum gfx_gl_texture_addressings[5] =
+const GLenum gfx_gl_texture_addressings[] =
 {
 	GL_CLAMP_TO_EDGE,
 	GL_REPEAT,
@@ -129,14 +129,14 @@ const GLenum gfx_gl_texture_addressings[5] =
 	GL_MIRROR_CLAMP_TO_EDGE,
 };
 
-const GLenum gfx_gl_mag_filterings[3] =
+const GLenum gfx_gl_mag_filterings[] =
 {
 	GL_NEAREST,
 	GL_NEAREST,
 	GL_LINEAR,
 };
 
-const GLenum gfx_gl_min_filterings[9] =
+const GLenum gfx_gl_min_filterings[] =
 {
 	GL_NEAREST,
 	GL_NEAREST,
@@ -149,7 +149,7 @@ const GLenum gfx_gl_min_filterings[9] =
 	GL_LINEAR_MIPMAP_LINEAR,
 };
 
-const GLenum gfx_gl_buffer_usages[4] =
+const GLenum gfx_gl_buffer_usages[] =
 {
 	GL_STATIC_DRAW,
 	GL_STATIC_DRAW,
@@ -157,7 +157,7 @@ const GLenum gfx_gl_buffer_usages[4] =
 	GL_STREAM_DRAW,
 };
 
-const GLenum gfx_gl_render_target_attachments[6] =
+const GLenum gfx_gl_render_target_attachments[] =
 {
 	GL_NONE,
 	GL_NONE,
@@ -167,7 +167,7 @@ const GLenum gfx_gl_render_target_attachments[6] =
 	GL_COLOR_ATTACHMENT3,
 };
 
-const GLenum gfx_gl_internal_formats[14] =
+const GLenum gfx_gl_internal_formats[] =
 {
 	GL_DEPTH24_STENCIL8,
 	GL_RGBA32F,
@@ -185,7 +185,7 @@ const GLenum gfx_gl_internal_formats[14] =
 	GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
 };
 
-const GLenum gfx_gl_formats[10] =
+const GLenum gfx_gl_formats[] =
 {
 	GL_DEPTH_STENCIL,
 	GL_BGRA,
@@ -199,7 +199,7 @@ const GLenum gfx_gl_formats[10] =
 	GL_RED,
 };
 
-const GLenum gfx_gl_format_types[10] =
+const GLenum gfx_gl_format_types[] =
 {
 	GL_UNSIGNED_INT_24_8,
 	GL_FLOAT,
@@ -213,13 +213,13 @@ const GLenum gfx_gl_format_types[10] =
 	GL_UNSIGNED_BYTE,
 };
 
-const GLint gfx_gl_index_sizes[2] =
+const GLint gfx_gl_index_sizes[] =
 {
 	2,
 	4,
 };
 
-const bool gfx_gl_attribute_normalized[34] =
+const bool gfx_gl_attribute_normalized[] =
 {
 	true, false, false,
 	true, false, false,
@@ -232,7 +232,7 @@ const bool gfx_gl_attribute_normalized[34] =
 	true, true, false, false,
 };
 
-const GLenum gfx_gl_attribute_types[34] =
+const GLenum gfx_gl_attribute_types[] =
 {
 	GL_FLOAT, GL_UNSIGNED_INT, GL_INT,
 	GL_FLOAT, GL_UNSIGNED_INT, GL_INT,
@@ -245,7 +245,7 @@ const GLenum gfx_gl_attribute_types[34] =
 	GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_BYTE, GL_BYTE,
 };
 
-const GLint gfx_gl_attribute_nb[34] =
+const GLint gfx_gl_attribute_nb[] =
 {
 	4, 4, 4,
 	3, 3, 3,
@@ -258,7 +258,7 @@ const GLint gfx_gl_attribute_nb[34] =
 	1, 1, 1, 1,
 };
 
-const bool gfx_gl_attribute_float[34] =
+const bool gfx_gl_attribute_float[] =
 {
 	true, false, false,
 	true, false, false,

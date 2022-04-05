@@ -1212,8 +1212,8 @@ static bool vk_create_pipeline_state(gfx_device_t *device, gfx_pipeline_state_t 
 	create_info.pColorBlendState = &color_blend_create_info;
 	create_info.pDynamicState = &dynamic_state_create_info;
 	create_info.layout = (VkPipelineLayout)shader_state->pipeline_layout.ptr;
-	create_info.renderPass = ;
-	create_info.subpass = ;
+	//create_info.renderPass = ;
+	//create_info.subpass = ;
 	create_info.basePipelineHandle = VK_NULL_HANDLE;
 	create_info.basePipelineIndex = -1;
 	VkResult result = vkCreateGraphicsPipelines(VK_DEVICE->vk_device, VK_NULL_HANDLE, 1, &create_info, NULL, (VkPipeline*)&state->handle.ptr);

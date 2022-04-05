@@ -59,14 +59,14 @@ typedef struct gfx_d3d9_device_s
 	uint64_t rasterizer_state;
 } gfx_d3d9_device_t;
 
-static const D3DPRIMITIVETYPE primitive_types[3] =
+static const D3DPRIMITIVETYPE primitive_types[] =
 {
 	D3DPT_TRIANGLELIST,
 	D3DPT_POINTLIST,
 	D3DPT_POINTLIST,
 };
 
-static const D3DCMPFUNC compare_functions[8] =
+static const D3DCMPFUNC compare_functions[] =
 {
 	D3DCMP_NEVER,
 	D3DCMP_LESS,
@@ -78,7 +78,7 @@ static const D3DCMPFUNC compare_functions[8] =
 	D3DCMP_ALWAYS,
 };
 
-static const D3DBLEND blend_functions[12] =
+static const D3DBLEND blend_functions[] =
 {
 	D3DBLEND_ZERO,
 	D3DBLEND_ONE,
@@ -94,7 +94,7 @@ static const D3DBLEND blend_functions[12] =
 	D3DBLEND_INVBLENDFACTOR,
 };
 
-static const D3DBLENDOP blend_equations[5] =
+static const D3DBLENDOP blend_equations[] =
 {
 	D3DBLENDOP_ADD,
 	D3DBLENDOP_SUBTRACT,
@@ -103,7 +103,7 @@ static const D3DBLENDOP blend_equations[5] =
 	D3DBLENDOP_MAX,
 };
 
-static const D3DSTENCILOP stencil_operations[8] =
+static const D3DSTENCILOP stencil_operations[] =
 {
 	D3DSTENCILOP_KEEP,
 	D3DSTENCILOP_ZERO,
@@ -115,14 +115,14 @@ static const D3DSTENCILOP stencil_operations[8] =
 	D3DSTENCILOP_INVERT,
 };
 
-static const D3DFILLMODE fill_modes[3] =
+static const D3DFILLMODE fill_modes[] =
 {
 	D3DFILL_POINT,
 	D3DFILL_WIREFRAME,
 	D3DFILL_SOLID,
 };
 
-static const D3DTEXTUREADDRESS texture_addressings[5] =
+static const D3DTEXTUREADDRESS texture_addressings[] =
 {
 	D3DTADDRESS_CLAMP,
 	D3DTADDRESS_WRAP,
@@ -131,17 +131,17 @@ static const D3DTEXTUREADDRESS texture_addressings[5] =
 	D3DTADDRESS_MIRRORONCE,
 };
 
-static const D3DTEXTUREFILTERTYPE filterings[3] =
+static const D3DTEXTUREFILTERTYPE filterings[] =
 {
 	D3DTEXF_NONE,
 	D3DTEXF_POINT,
 	D3DTEXF_LINEAR,
 };
 
-static const D3DCULL cull_modes[2][3] =
+static const D3DCULL cull_modes[] =
 {
-	{D3DCULL_NONE, D3DCULL_CW, D3DCULL_CCW},
-	{D3DCULL_NONE, D3DCULL_CCW, D3DCULL_CW},
+	D3DCULL_NONE, D3DCULL_CW, D3DCULL_CCW,
+	D3DCULL_NONE, D3DCULL_CCW, D3DCULL_CW,
 };
 
 static void d3d9_ctr(gfx_device_t *device)
@@ -424,7 +424,7 @@ static void d3d9_bind_rasterizer_state(gfx_device_t *device, const gfx_rasterize
 	{
 		D3D9_DEVICE->cull_mode = state->cull_mode;
 		D3D9_DEVICE->front_face = state->front_face;
-		D3D9_DEVICE->d3ddev->SetRenderState(D3DRS_CULLMODE, cull_modes[state->front_face][state->cull_mode]);
+		D3D9_DEVICE->d3ddev->SetRenderState(D3DRS_CULLMODE, cull_modes[state->front_face * 3 + state->cull_mode]);
 	}
 }
 

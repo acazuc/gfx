@@ -14,8 +14,13 @@
 # endif
 #endif
 
-#if defined(GFX_ENABLE_WINDOW_WAYLAND)
-# include "windows/wayland.h"
+#if defined(GFX_ENABLE_WINDOW_WL)
+# if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4)
+#  include "windows/egl.h"
+# endif
+# if defined(GFX_ENABLE_DEVICE_VK)
+#  include "windows/vk_wl.h"
+# endif
 #endif
 
 #if defined(GFX_ENABLE_WINDOW_WIN32)
@@ -48,7 +53,7 @@ bool gfx_has_window_backend(enum gfx_window_backend backend)
 		return true;
 #endif
 
-#if defined(GFX_ENABLE_WINDOW_WAYLAND)
+#if defined(GFX_ENABLE_WINDOW_WL)
 	if (backend == GFX_WINDOW_WAYLAND)
 		return true;
 #endif
@@ -176,10 +181,14 @@ gfx_window_t *gfx_create_window(const char *title, uint32_t width, uint32_t heig
 #endif
 			break;
 		case GFX_WINDOW_WAYLAND:
-#if defined(GFX_ENABLE_WINDOW_WAYLAND)
-#if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4) || defined(GFX_ENABLE_DEVICE_VK)
-			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4 || properties->device_backend == GFX_DEVICE_VK)
-				return gfx_wl_window_new(title, width, height, properties);
+#if defined(GFX_ENABLE_WINDOW_WL)
+#if defined(GFX_ENABLE_DEVICE_GL3) || defined(GFX_ENABLE_DEVICE_GL4)
+			if (properties->device_backend == GFX_DEVICE_GL3 || properties->device_backend == GFX_DEVICE_GL4)
+				return gfx_egl_window_new(title, width, height, properties);
+#endif
+#if defined(GFX_ENABLE_DEVICE_VK)
+			if (properties->device_backend == GFX_DEVICE_VK)
+				return gfx_vk_wl_window_new(title, width, height, properties);
 #endif
 #endif
 			break;
@@ -379,14 +388,10 @@ bool gfx_is_mouse_button_down(gfx_window_t *window, enum gfx_mouse_button mouse_
 
 void gfx_window_properties_init(gfx_window_properties_t *properties)
 {
-	properties->depth_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->stencil_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->red_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->green_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->blue_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->alpha_bits = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->samples = 0;
-	properties->srgb = GFX_WINDOW_PROPERTY_DONT_CARE;
-	properties->double_buffer = 1;
-	properties->stereo = 0;
+	properties->stencil_bits = 8;
+	properties->depth_bits = 24;
+	properties->red_bits = 8;
+	properties->green_bits = 8;
+	properties->blue_bits = 8;
+	properties->alpha_bits = 8;
 }

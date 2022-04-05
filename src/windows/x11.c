@@ -66,8 +66,12 @@ bool gfx_x11_create_window(gfx_x11_window_t *window, const char *title, uint32_t
 bool gfx_x11_ctr(gfx_x11_window_t *window, gfx_window_t *winref)
 {
 	window->winref = winref;
-	if (!(window->display = XOpenDisplay(NULL)))
+	window->display = XOpenDisplay(NULL);
+	if (!window->display)
+	{
+		GFX_ERROR_CALLBACK("failed to open x11 display");
 		return false;
+	}
 	return true;
 }
 

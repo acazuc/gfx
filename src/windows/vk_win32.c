@@ -58,7 +58,7 @@ static bool vk_win32_create_device(gfx_window_t *window)
 				result = vkCreateInstance(&create_info, NULL, &instance);
 				if (result != VK_SUCCESS)
 				{
-					GFX_ERROR_CALLBACK("can't create vulkan instance");
+					GFX_ERROR_CALLBACK("can't create win32 vulkan instance");
 					return false;
 				}
 			}
@@ -72,7 +72,7 @@ static bool vk_win32_create_device(gfx_window_t *window)
 				result = vkCreateWin32SurfaceKHR(instance, &create_info, NULL, &surface);
 				if (result != VK_SUCCESS)
 				{
-					GFX_ERROR_CALLBACK("can't create vulkan surface");
+					GFX_ERROR_CALLBACK("can't create win32 vulkan surface");
 					vkDestroyInstance(instance, NULL);
 					return false;
 				}
